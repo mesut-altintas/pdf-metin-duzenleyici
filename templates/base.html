@@ -52,7 +52,7 @@
   </main>
   <footer class="alt-bilgi">
     PDF Metin Düzenleyici · Sürüm {{ surum }} · {{ telif }} ·
-    <a href="{{ kaynak_adresi }}" rel="noopener">Kaynak kod ({{ lisans }})</a>
+    <a href="{{ url_for('kayit.hakkinda') }}">Hakkında</a>{# AGPL kaynak bağlantısı o sayfada #}
   </footer>
   <script src="{{ url_for('static', filename='pwa.js') }}"></script>
   {% block betik %}{% endblock %}

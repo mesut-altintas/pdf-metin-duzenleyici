@@ -306,3 +306,10 @@ def kosullar():
 @kayit_bp.route('/gizlilik')
 def gizlilik():
     return render_template('gizlilik.html')
+
+
+@kayit_bp.route('/hakkinda')
+def hakkinda():
+    """Uygulama, açık kaynak ve çalışan sürümün kaynak bağlantısı (AGPL-3.0 md. 13: ağ
+    üzerinden kullananlara kaynak sunulur). Alt bilginin "Hakkında" bağlantısı buraya gelir."""
+    return render_template('hakkinda.html')

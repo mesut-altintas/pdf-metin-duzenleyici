@@ -101,14 +101,22 @@ def test_surum_ve_telif_alt_bilgide(istemci):
 
 
 def test_her_sayfada_calisan_surumun_kaynak_baglantisi(istemci):
-    """AGPL-3.0: ağ üzerinden kullanana çalışan sürümün kaynağı sunulur (surum.py)."""
+    """AGPL-3.0 md. 13: ağ üzerinden kullanana çalışan sürümün kaynağı sunulur. 1.14'ten beri
+    her sayfanın alt bilgisi "Hakkında"ya gider, bağlantı o sayfada (kullanıcı kararı)."""
     from surum import KAYNAK_DEPO, SURUM
-    baglanti = f'href="{KAYNAK_DEPO}/tree/v{SURUM}"'
+    kaynak = f'href="{KAYNAK_DEPO}/tree/v{SURUM}"'
     assert KAYNAK_DEPO.startswith('https://github.com/')
-    for yol in ('/giris', '/kosullar', '/gizlilik'):
+    for yol in ('/giris', '/kosullar', '/gizlilik', '/hakkinda'):
         sayfa = istemci.get(yol).get_data(as_text=True)
-        assert baglanti in sayfa and 'Kaynak kod (AGPL-3.0)' in sayfa, yol
+        alt = sayfa[sayfa.index('<footer'):]
+        assert 'href="/hakkinda"' in alt, yol
     istemci.post('/giris', data={'kullanici': 'deneme', 'sifre': TEST_SIFRE})
-    assert baglanti in istemci.get('/').get_data(as_text=True)
+    sayfa = istemci.get('/').get_data(as_text=True)
+    assert 'href="/hakkinda"' in sayfa[sayfa.index('<footer'):]
+    istemci.post('/cikis', data={})
+    r = istemci.get('/hakkinda')                     # girişsiz açılır
+    assert r.status_code == 200
+    hakkinda = r.get_data(as_text=True)
+    assert kaynak in hakkinda and 'AGPL-3.0' in hakkinda and f'({SURUM})' in hakkinda
     kok = Path(__file__).resolve().parent.parent
     assert 'AGPL-3.0' in (kok / 'README.md').read_text(encoding='utf-8')

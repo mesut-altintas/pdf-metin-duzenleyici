@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block baslik %}Hakkında · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<article class="kart metin-sayfa">
+  <h1>PDF Metin Düzenleyici hakkında</h1>
+
+  <p>PDF'teki metni, belgenin görünümünü bozmadan değiştirmenizi sağlar. Değiştirmek
+    istediğiniz metne tıklar, yenisini yazar ve sonucu indirirsiniz. Yalnız değişen harfler
+    yeniden yazılır; tablolar, resimler ve öbür metinler olduğu gibi kalır. Uygulama her
+    üretimde dokunulmayan metnin yerinde durduğunu denetler, durmuyorsa dosyayı üretmez.</p>
+
+  <h2>Dosyanız saklanmaz</h2>
+  <p>Yüklediğiniz PDF yalnız işlem sırasında sunucunun belleğinde durur; diske, veritabanına ya
+    da kayıtlara yazılmaz. Sonucu cihazınıza siz indirirsiniz.</p>
+
+  <h2>Neler yapabilirsiniz</h2>
+  <ul>
+    <li>Metni yerinde değiştirme</li>
+    <li>Bir sözcüğü ya da tarihi bütün sayfalarda toplu bul ve değiştir</li>
+    <li>Boş bir yere yeni metin ekleme</li>
+    <li>Uzayan metni paragraf olarak yeniden dizme</li>
+    <li>Değişiklik listesini kaydedip aynı şablona yeniden uygulama</li>
+    <li>Telefonda kullanma ve ana ekrana ekleme</li>
+  </ul>
+
+  <h2>Açık kaynak</h2>
+  <p>Uygulamanın kaynak kodu GNU Affero Genel Kamu Lisansı sürüm 3 ({{ lisans }}) ile açıktır.
+    Şu an çalışan sürümün ({{ surum }}) kodu:
+    <a href="{{ kaynak_adresi }}" rel="noopener">{{ kaynak_adresi }}</a>.</p>
+  <p>PDF işleme için Artifex Software'in PyMuPDF kütüphanesi ({{ lisans }}) kullanılır.</p>
+
+  <p class="kucuk-not">Sürüm {{ surum }} · {{ telif }} ·
+    <a href="{{ url_for('kayit.kosullar') }}">Kullanım koşulları</a> ·
+    <a href="{{ url_for('kayit.gizlilik') }}">Aydınlatma metni</a></p>
+</article>
+{% endblock %}

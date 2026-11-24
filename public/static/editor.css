@@ -402,7 +402,8 @@ a.dugme { display: inline-block; text-decoration: none; }
 .olay-hata { background: var(--hata-acik); }
 .hata-yazi { color: var(--hata); }
 .alt-bilgi { text-align: center; color: var(--soluk); font-size: 13px; padding: 20px 16px 28px; }
-.alt-bilgi a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.alt-bilgi a { color: inherit; text-decoration: none; }
+.alt-bilgi a:hover, .alt-bilgi a:focus-visible { text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 900px) {
   .ozet-kutulari { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   /* Düzenleyicide alt panel alt bilgiyi örtmesin. */

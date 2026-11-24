@@ -67,8 +67,8 @@ sürümü koşullarıyla dağıtabilir ve değiştirebilirsiniz. Program yararl�
 umuduyla, hiçbir garanti olmadan dağıtılır. Lisansın tam metni: [LICENSE](LICENSE).
 
 AGPL, programı ağ üzerinden sunan herkesin, kullanıcılarına **çalışan sürümün**
-kaynak kodunu sunmasını ister. Uygulamanın alt bilgisindeki "Kaynak kod" bağlantısı
-bunu yapar (`surum.py`: `KAYNAK_DEPO`, `v<SURUM>` etiketi). Kodu kendi sunucunuzda
+kaynak kodunu sunmasını ister. Her sayfanın alt bilgisindeki "Hakkında" sayfası
+çalışan sürümün koduna bağlantı verir (`surum.py`: `KAYNAK_DEPO`, `v<SURUM>` etiketi). Kodu kendi sunucunuzda
 çalıştırıyorsanız bağlantıyı kendi deponuza çevirin.
 
 Kullanılan PDF kütüphanesi PyMuPDF (Artifex Software) de AGPL-3.0 lisanslıdır.
@@ -80,6 +80,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.14 | 24.11.2026 | Alt bilgi sadeleşti: kaynak bağlantısı yeni "Hakkında" sayfasına taşındı |
 | 1.13 | 24.11.2026 | Kullanım koşulları ve aydınlatma metni yeniden yazıldı (taslak); hesabı kapatıp kişisel veriyi anonimleştirme; kullanım kayıtlarında 2 yıl sınırı; kayıtta 18 yaş beyanı |
 | 1.12 | 24.11.2026 | Kaynak kod AGPL-3.0 ile açıldı: alt bilgide çalışan sürümün kaynak bağlantısı, kullanım koşullarında açık kaynak notu |
 | 1.11 | 23.11.2026 | Adres pdf.altintas.biz (e-postadaki bağlantılar gönderenle aynı alan adında); eski vercel.app adresi de açık |
