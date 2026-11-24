@@ -37,7 +37,7 @@ Testler:
 |---|---|
 | `SECRET_KEY` | Oturum çerezini imzalar. Vercel'de zorunlu; yoksa uygulama açılmaz. |
 | `KULLANICILAR` | Kalıcı yöneticiler: `ad=özet,ad2=özet`. Özet `sifre_ozeti.py` ile üretilir; şifre hiçbir yere yazılmaz. Sayfadan değiştirilemezler; veritabanına ulaşılamasa da girebilirler. |
-| `DATABASE_URL` | Neon Postgres. Diğer kullanıcılar burada; yöneticiler `/yonetim` sayfasından ekler, şifre sıfırlar, pasife alır, yönetici yapar, siler. Boşsa yalnız `KULLANICILAR` girer. |
+| `DATABASE_URL` | Neon Postgres. Diğer kullanıcılar burada; yöneticiler `/yonetim` sayfasından ekler, şifre sıfırlar, pasife alır, yönetici yapar, hesabı kapatıp anonimleştirir. Boşsa yalnız `KULLANICILAR` girer. |
 | `KOTA_KAPALI` | `1` ise aylık belge kotası kapalı: sayılmaz, ekranda sayaç çizilmez (`docs/plan-kota.md`). |
 | `RESEND_API_KEY`, `EPOSTA_GONDEREN`, `UYGULAMA_ADRESI` | E-posta gönderimi (Resend). Üçü de doluysa "Şifremi unuttum" açık; bağlantılar `UYGULAMA_ADRESI`'nden kurulur (`docs/kayit.md`). |
 | `KAYIT_ACIK` | `1` ise herkes e-postayla kayıt olabilir (e-posta da tanımlı olmalı). Varsayılan kapalı. |
@@ -80,6 +80,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.13 | 24.11.2026 | Kullanım koşulları ve aydınlatma metni yeniden yazıldı (taslak); hesabı kapatıp kişisel veriyi anonimleştirme; kullanım kayıtlarında 2 yıl sınırı; kayıtta 18 yaş beyanı |
 | 1.12 | 24.11.2026 | Kaynak kod AGPL-3.0 ile açıldı: alt bilgide çalışan sürümün kaynak bağlantısı, kullanım koşullarında açık kaynak notu |
 | 1.11 | 23.11.2026 | Adres pdf.altintas.biz (e-postadaki bağlantılar gönderenle aynı alan adında); eski vercel.app adresi de açık |
 | 1.10 | 22.11.2026 | E-postayla kayıt (kapalı, `KAYIT_ACIK` ile açılır), şifremi unuttum, e-postayla giriş, yönetimde kullanıcıya e-posta, kullanım koşulları ve aydınlatma metni taslağı |

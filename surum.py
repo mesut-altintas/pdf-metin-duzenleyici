@@ -6,7 +6,7 @@ bilgideki bağlantı `KAYNAK_DEPO`'daki `v<SURUM>` etiketine gider; bu yüzden e
 yayından önce açık depoda olmalı. Kodu kendi sunucusunda çalıştıran, bağlantıyı
 kendi deposuna çevirmelidir.
 """
-SURUM = '1.12'
+SURUM = '1.13'
 TELIF = '© 2026 Mesut Altıntaş'
 KAYNAK_DEPO = 'https://github.com/mesut-altintas/pdf-metin-duzenleyici'
 LISANS = 'AGPL-3.0'

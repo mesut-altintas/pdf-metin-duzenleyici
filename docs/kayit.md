@@ -74,10 +74,27 @@ buna çevrildi: bağlantı ile gönderen aynı alan adında.
 
 Bağlantıyı açmak (GET) belirteci tüketmez; tarayıcıların ön açması şifre yenilemeyi bozmaz.
 
+## Hesap kapatma ve saklama (1.13)
+
+Aydınlatma metni md. 7'nin kodda karşılığı:
+
+- **Hesap kapatma:** kullanıcı [İLETİŞİM E-POSTASI]'na yazar, yönetici Yönetim'de "Kapat ve
+  anonimleştir"e basar (`kullanicilar.kapat_anonimlestir`). Tek ifadede: kullanıcı adı
+  `silinmis-<12 hane>` olur; ad soyad, e-posta, şifre özeti, son giriş silinir, giriş kapanır,
+  oturum düşer; aynı ad `hesap`, `kullanim_olayi` ve `yonetim_kaydi`'nda da yeni kimlikle
+  değişir. Sayılar (kullanım, kota) kalır, kişiyle ilişkisi kalmaz. Adres boşa çıkar, yeniden
+  kayıt olunabilir. Kapatılmış hesap yönetimden değiştirilemez. Metin "en geç 30 gün" der;
+  işlem anında yapılır, süre başvurunun karşılanması içindir.
+- 1.13'e kadar "Sil" yalnız kullanıcı satırını siliyordu; ad kayıtlarda kalıyordu. `vt.sil`
+  kodda duruyor, hiçbir uçtan çağrılmıyor.
+- **Saklama sınırı:** `kullanim_olayi`'nda 2 yıldan eski satırlar her soğuk başlangıçta
+  silinir (`kullanicilar.kullanim_saklama_siniri`, `KULLANIM_SAKLAMA_YIL`).
+- Kapsam dışı (metin bunları sağlayıcıya bırakır): Resend'deki e-posta kayıtları, Vercel'in
+  istek kayıtları.
+
 ## Açık konular
 
 - Yasal metinlerin köşeli parantezli yerleri (avukat) ve satıcı kimliği.
-- Hesap kapatma / silme talebi (KVKK m. 11): usul ve saklama süresi kararı bekliyor.
 - Kayıt açılmadan önce insan doğrulaması.
 - Ürün alan adı alınınca gönderen ve uygulama adresi.
 - Vercel istek logu bağlantıyı sorgu dizgisiyle yazar (belirteç ve içindeki adres 1 saat
