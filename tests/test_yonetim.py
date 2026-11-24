@@ -170,7 +170,7 @@ def test_veritabani_yoneticisi_kendine_zarar_veremez(app):
     belirtec = _csrf(ist, '/yonetim/')
     for yol, veri, mesaj in (('/yonetim/mert/aktif', {'deger': '0'}, 'pasife alamazsınız'),
                              ('/yonetim/mert/yonetici', {'deger': '0'}, 'kaldıramazsınız'),
-                             ('/yonetim/mert/sil', {}, 'Kendinizi silemezsiniz'),
+                             ('/yonetim/mert/sil', {}, 'Kendi hesabınızı kapatamazsınız'),
                              ('/yonetim/mert/sifre', {}, '“Şifre” sayfasından')):
         r = ist.post(yol, data={**veri, 'csrf_token': belirtec}, follow_redirects=True)
         assert mesaj in r.get_data(as_text=True), yol
@@ -219,18 +219,22 @@ def test_sifre_sifirlama_eski_oturumu_ve_sifreyi_gecersiz_kilar(app):
     assert ist2.get('/').headers['Location'].endswith('/sifre')
 
 
-def test_kalici_silme(app):
+def test_kapatma_kisisel_veriyi_anonimlestirir_oturumu_dusurur(app):
+    """Eski adı 'kalıcı silme' idi; 1.13'ten beri hesap kapatılıp anonimleştirilir (kayit kapatma testleri:
+    test_hesap_kapatma.py)."""
     yon = _yonetici(app)
     _ekle(yon, 'gidecek', sifre='gidecek-sifre', degistirmeli=False)
     ist = app.test_client()
     _giris(ist, 'gidecek', 'gidecek-sifre')
-    _post(yon, '/yonetim/gidecek/sil')
+    sayfa = yon.get('/yonetim/').get_data(as_text=True)
+    eylem = re.search(r'action="(/yonetim/gidecek/sil)"', sayfa).group(1)
+    _post(yon, eylem)
     assert vt.bul('gidecek') is None
     assert ist.get('/').status_code == 302
     r = _post(yon, '/yonetim/gidecek/sil')
     assert 'bulunamadı' in yon.get('/yonetim/').get_data(as_text=True)
     assert r.status_code == 302
-    assert [x['islem'] for x in vt.kayitlar()].count('silindi') == 1
+    assert [x['islem'] for x in vt.kayitlar()].count('hesabı kapatıldı, kişisel verileri anonimleştirildi') == 1
 
 
 def test_yonetim_formu_csrf_ister(app):

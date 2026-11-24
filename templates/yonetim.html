@@ -67,15 +67,18 @@
         {% endfor %}
         {% for k in kullanicilar %}
         {% set kendisi = ben and ben.ad == k.ad %}
+        {% set kapali = anonim_mi(k.ad) %}
         <tr class="{{ '' if k.aktif else 'pasif' }}">
           <td><strong>{{ k.ad }}</strong>{% if kendisi %} <span class="kucuk-not">(siz)</span>{% endif %}
             {% if k.gorunen_ad %}<div class="kucuk-not">{{ k.gorunen_ad }}</div>{% endif %}
             {% if k.eposta %}<div class="kucuk-not">{{ k.eposta }}</div>{% endif %}</td>
           <td data-etiket="Rol">{% if k.yonetici %}<span class="rozet yonetici">Yönetici</span>{% else %}<span class="rozet">Kullanıcı</span>{% endif %}</td>
-          <td data-etiket="Durum">{% if k.aktif %}<span class="rozet etkin">Etkin</span>{% else %}<span class="rozet pasif">Pasif</span>{% endif %}
+          <td data-etiket="Durum">{% if kapali %}<span class="rozet pasif">Kapatıldı (anonim)</span>{% elif k.aktif %}<span class="rozet etkin">Etkin</span>{% else %}<span class="rozet pasif">Pasif</span>{% endif %}
             {% if k.aktif and k.sifre_degistirmeli %}<div class="kucuk-not">Şifre değiştirmeyi bekliyor</div>{% endif %}</td>
           <td data-etiket="Plan">
-            {% if k.plan %}
+            {% if k.plan and kapali %}
+            <span class="kucuk-not">{{ plan_bul(k.plan).ad }}</span>
+            {% elif k.plan %}
             {% set p = plan_bul(k.plan) %}
             <form method="post" action="{{ url_for('yonetim.plan_degistir', ad=k.ad) }}" class="plan-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -96,7 +99,9 @@
           <td class="kucuk-not" data-etiket="Son giriş">{{ k.son_giris|tarihsaat if k.son_giris else 'Hiç girmedi' }}</td>
           <td class="kucuk-not" data-etiket="Ekleyen">{{ k.olusturan }}<div>{{ k.olusturma|tarihsaat }}</div></td>
           <td><div class="islemler">
-            {% if not kendisi %}
+            {% if kapali %}
+            <span class="kucuk-not">Kapatılmış hesap; değiştirilemez</span>
+            {% elif not kendisi %}
             <details class="sifirla">
               <summary class="dugme ikincil kucuk">Şifre sıfırla</summary>
               <form method="post" action="{{ url_for('yonetim.sifre_sifirla', ad=k.ad) }}" class="form">
@@ -127,9 +132,9 @@
               <button type="submit" class="dugme ikincil kucuk">{{ 'Yöneticiliği kaldır' if k.yonetici else 'Yönetici yap' }}</button>
             </form>
             <form method="post" action="{{ url_for('yonetim.sil', ad=k.ad) }}"
-                  data-onay="“{{ k.ad }}” kalıcı olarak silinsin mi? Bu geri alınamaz; yalnız ayrılmasın isterseniz pasife alın.">
+                  data-onay="“{{ k.ad }}” hesabı kapatılsın ve kişisel verileri anonimleştirilsin mi? Adı, e-postası ve şifresi silinir; kullanım ve yönetim kayıtlarındaki adı anonim bir kimlikle değişir. Bu geri alınamaz; yalnız giriş yapmasın isterseniz pasife alın.">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="dugme tehlike kucuk">Sil</button>
+              <button type="submit" class="dugme tehlike kucuk">Kapat ve anonimleştir</button>
             </form>
             {% else %}
             <span class="kucuk-not">Kendi hesabınız</span>

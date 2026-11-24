@@ -37,6 +37,7 @@ def _ciz(hata=None, form=None, kod=200):
         kayitlar=kayitlar, kayit_siniri=KAYIT_SINIRI, vt_var=vt.tanimli(),
         okuma_hatasi=okuma_hatasi, hata=hata, form=form or {}, planlar=planlar.PLANLAR,
         plan_bul=planlar.bul, varsayilan_plan=planlar.VARSAYILAN, gecis_plan=planlar.GECIS,
+        anonim_mi=vt.anonim_mi,
         kota_kapali=kota.kapali()), kod
 
 
@@ -48,6 +49,8 @@ def _hedef(ad):
         return 'Kullanıcı bulunamadı.'
     if ad in ortam_kullanicilari():
         return 'Ortam değişkenindeki yönetici bu sayfadan değiştirilemez.'
+    if vt.anonim_mi(ad):
+        return 'Kapatılmış hesap değiştirilemez.'
     return None
 
 
@@ -202,17 +205,20 @@ def eposta_degistir(ad):
 @yonetim_bp.route('/<ad>/sil', methods=['POST'])
 @yonetici_gerekli
 def sil(ad):
+    """Hesabı kapatır ve kişisel verileri anonimleştirir (1.13'e kadar yalnız kullanıcı
+    satırını siliyordu; kullanım ve yönetim kayıtlarında ad kalıyordu — aydınlatma
+    metni md. 7'ye aykırı). `vt.sil` duruyor ama bu uçtan çağrılmıyor."""
     ben = g.kullanici_nesnesi
     hata = _hedef(ad)
     if not hata and ad == ben.ad:
-        hata = 'Kendinizi silemezsiniz.'
+        hata = 'Kendi hesabınızı kapatamazsınız.'
     if not hata:
         try:
-            if not vt.sil(ad, ben.ad):
+            if not vt.kapat_anonimlestir(ad, ben.ad):
                 hata = 'Kullanıcı bulunamadı.'
         except vt.DepoHatasi as e:
             hata = str(e)
-    return _sonuc(hata, f'“{ad}” kalıcı olarak silindi.')
+    return _sonuc(hata, f'“{ad}” hesabı kapatıldı; kişisel verileri anonimleştirildi.')
 
 
 @yonetim_bp.route('/kullanim')

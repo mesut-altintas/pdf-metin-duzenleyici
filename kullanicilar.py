@@ -13,6 +13,7 @@ Kurallar:
 """
 import logging
 import os
+import secrets
 import threading
 import time
 
@@ -114,6 +115,24 @@ _GECIS_SQL = """
     INSERT INTO hesap (id, ad, plan) SELECT hesap_id, ad, %s FROM k"""
 
 
+# Kullanım kayıtları en çok bu kadar yıl saklanır (aydınlatma metni md. 7). Silme her
+# soğuk başlangıçta, şema kurulduktan sonra koşar (zaman dizini var; ucuz).
+KULLANIM_SAKLAMA_YIL = 2
+
+
+def kullanim_saklama_siniri():
+    """Süresi dolan kullanım kayıtlarını siler; silinen sayısı (hatada None). Bağlantı
+    kurulurken çağrılır: hata kullanıcının işini durdurmaz, log'a düşer."""
+    try:
+        with _baglanti.cursor() as cur:
+            cur.execute('DELETE FROM kullanim_olayi WHERE zaman < now() - make_interval(years => %s)',
+                        (KULLANIM_SAKLAMA_YIL,))
+            return cur.rowcount
+    except psycopg2.Error:
+        log.error('kullanım kayıtlarının saklama sınırı uygulanamadı', exc_info=True)
+        return None
+
+
 class DepoHatasi(Exception):
     """Kullanıcıya gösterilecek depo hatası."""
 
@@ -167,6 +186,7 @@ def _baglan():
                 cur.execute(_GECIS_SQL, (planlar.GECIS,))
         except psycopg2.Error:
             log.error('hesap geçişi yapılamadı', exc_info=True)
+        kullanim_saklama_siniri()
         _sema_kuruldu = True
     return _baglanti
 
@@ -381,6 +401,48 @@ def sil(ad, yapan):
     n = _kayitli('DELETE FROM kullanicilar WHERE ad = %s RETURNING ad', (ad,), yapan, 'silindi')
     onbellek_sil(ad)
     return n == 1
+
+
+ANONIM_ONEK = 'silinmis-'      # kapatılmış hesabın yeni kimliği: silinmis-<12 hane>
+
+
+def anonim_mi(ad):
+    return bool(ad) and ad.startswith(ANONIM_ONEK)
+
+
+def kapat_anonimlestir(ad, yapan):
+    """Hesabı kapatır ve kişisel verileri anonimleştirir (aydınlatma metni md. 7;
+    KVKK m. 7). Tek ifadede: kullanıcı adı rastgele bir kimlikle değişir; ad soyad,
+    e-posta, şifre özeti ve son giriş silinir, giriş kapanır; aynı ad hesap tablosunda,
+    kullanım kayıtlarında ve yönetim kaydında da yeni kimlikle değiştirilir. Sayılar
+    (kullanım, kota) kalır, kişiyle ilişkisi kalmaz. Dönen: yeni kimlik; kullanıcı
+    yoksa ya da zaten kapatılmışsa None."""
+    anon = ANONIM_ONEK + secrets.token_hex(6)
+    p = {'ad': ad, 'anon': anon, 'yapan': yapan,
+         'islem': 'hesabı kapatıldı, kişisel verileri anonimleştirildi'}
+    satir = _yaz("""
+        WITH k AS (
+            UPDATE kullanicilar SET ad = %(anon)s, gorunen_ad = '', eposta = NULL,
+                eposta_dogrulandi = NULL, sifre_ozeti = '!', aktif = FALSE, yonetici = FALSE,
+                sifre_degistirmeli = FALSE, son_giris = NULL, oturum_surum = oturum_surum + 1
+            WHERE ad = %(ad)s RETURNING hesap_id
+        ), h AS (
+            UPDATE hesap SET ad = %(anon)s WHERE id IN (SELECT hesap_id FROM k) RETURNING 1
+        ), o AS (
+            UPDATE kullanim_olayi SET kullanici = %(anon)s
+            WHERE kullanici = %(ad)s AND EXISTS (SELECT 1 FROM k) RETURNING 1
+        ), y AS (
+            UPDATE yonetim_kaydi SET
+                yapan = CASE WHEN yapan = %(ad)s THEN %(anon)s ELSE yapan END,
+                hedef = CASE WHEN hedef = %(ad)s THEN %(anon)s ELSE hedef END
+            WHERE (yapan = %(ad)s OR hedef = %(ad)s) AND EXISTS (SELECT 1 FROM k) RETURNING 1
+        ), g AS (
+            INSERT INTO yonetim_kaydi (yapan, islem, hedef)
+            SELECT %(yapan)s, %(islem)s, %(anon)s FROM k RETURNING 1
+        )
+        SELECT (SELECT count(*) FROM k) AS n""", p, getir=True)
+    onbellek_sil(ad)
+    return anon if satir and satir['n'] == 1 else None
 
 
 def hesap_gecisi():
