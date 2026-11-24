@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block baslik %}Hesabı tamamla · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="giris-kutu">
+  <div class="giris-baslik">
+    <h1>Hesabınızı tamamlayın</h1>
+    <p class="kucuk-not">{{ eposta }}</p>
+  </div>
+  {% if hata %}<p class="uyari hata">{{ hata }}</p>{% endif %}
+  <form method="post" action="{{ url_for('kayit.tamamla') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="t" value="{{ t }}">
+    <input type="email" name="kullanici_eposta" value="{{ eposta }}" autocomplete="username" hidden>
+    <label>Adınız soyadınız
+      <input name="gorunen_ad" value="{{ form.gorunen_ad }}" autocomplete="name" maxlength="80" required autofocus>
+    </label>
+    <label>Şifre <span class="kucuk-not">(en az {{ en_az }} karakter)</span>
+      <input name="sifre" type="password" autocomplete="new-password" minlength="{{ en_az }}" required>
+    </label>
+    <label>Şifre (yeniden)
+      <input name="tekrar" type="password" autocomplete="new-password" minlength="{{ en_az }}" required>
+    </label>
+    <label class="kutu kosul">
+      <input type="checkbox" name="kosul" value="1" required>
+      <span><a href="{{ url_for('kayit.kosullar') }}" target="_blank" rel="noopener">Kullanım koşullarını</a> okudum, kabul ediyorum.</span>
+    </label>
+    <p class="kucuk-not">Kişisel verilerinizin nasıl işlendiği:
+      <a href="{{ url_for('kayit.gizlilik') }}" target="_blank" rel="noopener">Aydınlatma metni</a>.</p>
+    <button type="submit" class="dugme birincil">Hesabı aç</button>
+  </form>
+</div>
+{% endblock %}

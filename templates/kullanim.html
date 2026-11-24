@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block baslik %}Kullanım · Yönetim{% endblock %}
+{% block icerik %}
+<div class="yonetim">
+  <h1>Yönetim</h1>
+  {% set sekme = 'kullanim' %}{% include '_yonetim_sekmeler.html' %}
+
+  <nav class="donemler" aria-label="Dönem">
+    {% for g, ad in donemler.items() %}
+    <a href="{{ url_for('yonetim.kullanim_sayfasi', gun=g) }}" class="dugme kucuk {{ 'birincil' if g == gun else 'ikincil' }}">{{ ad }}</a>
+    {% endfor %}
+  </nav>
+
+  {% if not vt_var %}
+  <p class="uyari hata">Veritabanı tanımlı değil (<code>DATABASE_URL</code>); kullanım ölçülmüyor.</p>
+  {% elif hata %}
+  <p class="uyari hata">{{ hata }}</p>
+  {% else %}
+
+  <section class="ozet-kutulari">
+    <div class="ozet-kutu"><span class="deger">{{ toplam.acilan }}</span><span class="etiket">Açılan PDF</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ farkli }}</span><span class="etiket">Farklı dosya</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ toplam.uretilen }}</span><span class="etiket">Oluşturulan PDF</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ toplam.degisen }}</span><span class="etiket">Değiştirilen metin</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ toplam.eklenen }}</span><span class="etiket">Eklenen metin</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ toplam.indirilen }}</span><span class="etiket">İndirilen / paylaşılan</span></div>
+    <div class="ozet-kutu {{ 'sorunlu' if toplam.sorun else '' }}"><span class="deger">{{ toplam.sorun }}</span><span class="etiket">Sorun</span></div>
+  </section>
+
+  <section class="kart">
+    <h2>Kullanıcılar</h2>
+    {% if satirlar %}
+    <div class="tablo-kap">
+    <table class="tablo">
+      <thead>
+        <tr><th>Kullanıcı</th><th>Giriş</th><th>Açılan PDF</th><th>Farklı dosya</th><th>Sayfa</th>
+            <th>Oluşturulan</th><th>Değiştirilen metin</th><th>Eklenen metin</th><th>İndirilen</th><th>Sorun</th><th>Son kullanım</th></tr>
+      </thead>
+      <tbody>
+        {% for r in satirlar %}
+        <tr>
+          <td><strong>{{ r.kullanici }}</strong></td>
+          <td data-etiket="Giriş">{{ r.giris }}</td>
+          <td data-etiket="Açılan PDF">{{ r.acilan }}</td>
+          <td data-etiket="Farklı dosya">{{ r.farkli }}</td>
+          <td data-etiket="Sayfa">{{ r.sayfa }}</td>
+          <td data-etiket="Oluşturulan">{{ r.uretilen }}</td>
+          <td data-etiket="Değiştirilen metin">{{ r.degisen }}</td>
+          <td data-etiket="Eklenen metin">{{ r.eklenen }}</td>
+          <td data-etiket="İndirilen">{{ r.indirilen }}</td>
+          <td data-etiket="Sorun">{{ r.sorun }}</td>
+          <td class="kucuk-not" data-etiket="Son kullanım">{{ r.son|tarihsaat }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="kucuk-not">Bu dönemde kullanım yok.</p>
+    {% endif %}
+  </section>
+
+  <section class="kart">
+    <h2>Son olaylar</h2>
+    {% if olaylar %}
+    {% if olaylar|length >= olay_siniri %}<p class="kucuk-not">Bu dönemin son {{ olay_siniri }} olayı gösteriliyor.</p>{% endif %}
+    <ul class="kayit-listesi">
+      {% for o in olaylar %}
+      <li class="{{ '' if o.basarili else 'olay-hata' }}">
+        <span class="kucuk-not">{{ o.zaman|tarihsaat }}</span>
+        <strong>{{ o.kullanici }}</strong> · {{ turler.get(o.tur, o.tur) }}
+        <span class="kucuk-not">
+          {%- if o.sayfa is not none %} · {{ o.sayfa }} sayfa{% endif %}
+          {%- if o.boyut is not none %} · {{ o.boyut|mb }} MB{% endif %}
+          {%- if o.duzeltme %} · {{ o.duzeltme }} değişiklik{% endif %}
+          {%- if o.ekleme %} · {{ o.ekleme }} ekleme{% endif %}
+          {%- if o.uyari %} · {{ o.uyari }} uyarı{% endif %}
+          {%- if o.sure_ms is not none %} · {% if o.sure_ms < 1000 %}{{ o.sure_ms }} ms{% else %}{{ '%.1f'|format(o.sure_ms / 1000)|replace('.', ',') }} sn{% endif %}{% endif %}
+          {%- if not o.basarili %} · <span class="hata-yazi">{{ hatalar.get(o.hata, 'hata') }}</span>{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="kucuk-not">Bu dönemde olay yok.</p>
+    {% endif %}
+  </section>
+
+  <p class="kucuk-not">Kaydedilenler yalnız sayılardır: dosya adı, dosya içeriği ve değiştirilen metinler kaydedilmez.
+    “Farklı dosya”, dosyanın geri çözülemeyen parmak izinden sayılır.</p>
+  {% endif %}
+</div>
+{% endblock %}

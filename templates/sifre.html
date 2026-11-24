@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block baslik %}Şifre · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="kart dar">
+  <h1>Şifre değiştir</h1>
+  {% if ortam %}
+  <p>Şifreniz Vercel'deki <code>KULLANICILAR</code> ortam değişkeninde tanımlı; bu sayfadan
+     değiştirilemez. Yeni özeti <code>python sifre_ozeti.py</code> ile üretip ortam değişkenini
+     güncelleyin, ardından uygulama yeniden yayınlanmalı.</p>
+  {% else %}
+  {% if zorunlu %}<p class="uyari">Devam etmeden önce yöneticinin verdiği şifreyi değiştirin.</p>{% endif %}
+  {% if hata %}<p class="uyari hata">{{ hata }}</p>{% endif %}
+  <form method="post" class="form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Mevcut şifre
+      <input name="mevcut" type="password" autocomplete="current-password" required autofocus>
+    </label>
+    <label>Yeni şifre <span class="kucuk-not">(en az {{ en_az }} karakter)</span>
+      <input name="yeni" type="password" autocomplete="new-password" minlength="{{ en_az }}" required>
+    </label>
+    <label>Yeni şifre (tekrar)
+      <input name="tekrar" type="password" autocomplete="new-password" minlength="{{ en_az }}" required>
+    </label>
+    <button type="submit" class="dugme birincil">Şifreyi değiştir</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

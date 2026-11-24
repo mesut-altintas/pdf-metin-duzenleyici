@@ -1,0 +1,4 @@
+<nav class="sekmeler" aria-label="Yönetim">
+  <a href="{{ url_for('yonetim.liste') }}" {% if sekme == 'kullanicilar' %}class="secili" aria-current="page"{% endif %}>Kullanıcılar</a>
+  <a href="{{ url_for('yonetim.kullanim_sayfasi') }}" {% if sekme == 'kullanim' %}class="secili" aria-current="page"{% endif %}>Kullanım</a>
+</nav>

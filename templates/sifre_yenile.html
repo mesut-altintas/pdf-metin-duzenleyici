@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block baslik %}Şifre yenile · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="giris-kutu">
+  <div class="giris-baslik">
+    <h1>Yeni şifre</h1>
+    <p class="kucuk-not">{{ eposta }}</p>
+  </div>
+  {% if hata %}<p class="uyari hata">{{ hata }}</p>{% endif %}
+  <form method="post" action="{{ url_for('kayit.sifre_yenile') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="t" value="{{ t }}">
+    <input type="email" name="kullanici_eposta" value="{{ eposta }}" autocomplete="username" hidden>
+    <label>Yeni şifre <span class="kucuk-not">(en az {{ en_az }} karakter)</span>
+      <input name="sifre" type="password" autocomplete="new-password" minlength="{{ en_az }}" required autofocus>
+    </label>
+    <label>Yeni şifre (yeniden)
+      <input name="tekrar" type="password" autocomplete="new-password" minlength="{{ en_az }}" required>
+    </label>
+    <button type="submit" class="dugme birincil">Şifreyi kaydet</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="uygulama-surumu" content="{{ surum }}">
+  <meta name="theme-color" content="#1f5fd1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PDF Düzenle">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>{% block baslik %}PDF Metin Düzenleyici{% endblock %}</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="{{ url_for('static', filename='simge/simge.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='simge/favicon-32.png') }}" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='simge/apple-touch-icon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='editor.css') }}">
+</head>
+<body>
+  <header class="ust">
+    <div class="ust-ic">
+      <a class="logo" href="{{ url_for('pdf.editor') }}">
+        <img src="{{ url_for('static', filename='simge/simge.svg') }}" alt="" width="28" height="28">
+        <span>PDF Metin Düzenleyici</span>
+      </a>
+      <nav class="gezinti">
+        <button type="button" class="dugme ikincil kucuk" id="yukle-dugmesi" hidden>Uygulamayı yükle</button>
+        {% if ben %}
+        <span class="kim">{{ ben.gorunen_ad }}</span>
+        {% if ben.yonetici %}<a href="{{ url_for('yonetim.liste') }}">Yönetim</a>{% endif %}
+        {% if ben.kaynak == 'vt' %}<a href="{{ url_for('giris.sifre') }}">Şifre</a>{% endif %}
+        <form method="post" action="{{ url_for('giris.cikis') }}" class="cikis">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="dugme ikincil kucuk">Çıkış</button>
+        </form>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <main>
+    <p class="uyari ust-mesaj" id="ios-ipucu" hidden>
+      Uygulama gibi kullanmak için Safari'de <strong>Paylaş</strong> → <strong>Ana Ekrana Ekle</strong>'ye dokunun.
+      <button type="button" class="dugme bag" data-kapat>Kapat</button>
+    </p>
+    {% with mesajlar = get_flashed_messages(with_categories=true) %}
+    {% for tur, mesaj in mesajlar %}
+    <p class="uyari {{ 'hata' if tur == 'hata' else 'basari' }} ust-mesaj">{{ mesaj }}</p>
+    {% endfor %}
+    {% endwith %}
+    {% block icerik %}{% endblock %}
+  </main>
+  <footer class="alt-bilgi">
+    PDF Metin Düzenleyici · Sürüm {{ surum }} · {{ telif }} ·
+    <a href="{{ kaynak_adresi }}" rel="noopener">Kaynak kod ({{ lisans }})</a>
+  </footer>
+  <script src="{{ url_for('static', filename='pwa.js') }}"></script>
+  {% block betik %}{% endblock %}
+</body>
+</html>

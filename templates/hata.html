@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block baslik %}Hata · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="kart dar">
+  <h1>{{ baslik or 'Bir sorun var' }}</h1>
+  <p>{{ mesaj }}</p>
+  <p><a href="{{ url_for('pdf.editor') }}">Ana sayfaya dön</a></p>
+</div>
+{% endblock %}

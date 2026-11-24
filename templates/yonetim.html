@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block baslik %}Yönetim · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="yonetim">
+  <h1>Yönetim</h1>
+  {% set sekme = 'kullanicilar' %}{% include '_yonetim_sekmeler.html' %}
+  {% if hata %}<p class="uyari hata">{{ hata }}</p>{% endif %}
+  {% if not vt_var %}
+  <p class="uyari hata">Veritabanı tanımlı değil (<code>DATABASE_URL</code>). Kullanıcı eklenemez;
+    yalnız ortam değişkenindeki yöneticiler girebilir.</p>
+  {% endif %}
+
+  {% if vt_var %}
+  <section class="kart">
+    <h2>Yeni kullanıcı</h2>
+    <form method="post" action="{{ url_for('yonetim.ekle') }}" class="form satir-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Kullanıcı adı
+        <input name="ad" value="{{ form.ad or '' }}" required autocomplete="off" autocapitalize="none"
+               pattern="[a-z0-9][a-z0-9._\-]{1,39}" title="Küçük harf, rakam, nokta, tire, alt çizgi (2–40)">
+      </label>
+      <label>Ad soyad <span class="kucuk-not">(isteğe bağlı)</span>
+        <input name="gorunen_ad" value="{{ form.gorunen_ad or '' }}" maxlength="80" autocomplete="off">
+      </label>
+      <label>Şifre <span class="kucuk-not">(boş bırakılırsa üretilir)</span>
+        <input name="sifre" type="password" autocomplete="new-password" minlength="10">
+      </label>
+      <label>E-posta <span class="kucuk-not">(isteğe bağlı; e-postayla girer, şifresini yenileyebilir)</span>
+        <input name="eposta" type="email" value="{{ form.eposta or '' }}" maxlength="254" autocomplete="off">
+      </label>
+      <label>Plan
+        <select name="plan">
+          {% for kod, p in planlar.items() %}
+          <option value="{{ kod }}" {% if (form.plan or varsayilan_plan) == kod %}selected{% endif %}>{{ p.ad }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="kutular">
+        <label class="kutu"><input type="checkbox" name="yonetici" value="1" {% if form.yonetici %}checked{% endif %}> Yönetici</label>
+        <label class="kutu"><input type="checkbox" name="degistirmeli" value="1"
+          {% if form.degistirmeli or form.ad is not defined %}checked{% endif %}> İlk girişte şifresini değiştirsin</label>
+      </div>
+      <button type="submit" class="dugme birincil">Ekle</button>
+    </form>
+  </section>
+  {% endif %}
+
+  <section class="kart">
+    <h2>Kullanıcılar</h2>
+    {% if okuma_hatasi %}<p class="uyari hata">{{ okuma_hatasi }}</p>{% endif %}
+    <div class="tablo-kap">
+    <table class="tablo">
+      <thead>
+        <tr><th>Kullanıcı</th><th>Rol</th><th>Durum</th><th>Plan</th><th>Son giriş</th><th>Ekleyen</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for ad in ortam %}
+        <tr>
+          <td><strong>{{ ad }}</strong>{% if ben and ben.ad == ad %} <span class="kucuk-not">(siz)</span>{% endif %}</td>
+          <td data-etiket="Rol"><span class="rozet yonetici">Yönetici</span></td>
+          <td data-etiket="Durum"><span class="rozet">Ortam değişkeni</span></td>
+          <td class="kucuk-not" data-etiket="Plan">Kotasız</td>
+          <td class="kucuk-not masaustu-hucre">—</td>
+          <td class="kucuk-not masaustu-hucre">—</td>
+          <td class="kucuk-not">Bu sayfadan değiştirilemez</td>
+        </tr>
+        {% endfor %}
+        {% for k in kullanicilar %}
+        {% set kendisi = ben and ben.ad == k.ad %}
+        <tr class="{{ '' if k.aktif else 'pasif' }}">
+          <td><strong>{{ k.ad }}</strong>{% if kendisi %} <span class="kucuk-not">(siz)</span>{% endif %}
+            {% if k.gorunen_ad %}<div class="kucuk-not">{{ k.gorunen_ad }}</div>{% endif %}
+            {% if k.eposta %}<div class="kucuk-not">{{ k.eposta }}</div>{% endif %}</td>
+          <td data-etiket="Rol">{% if k.yonetici %}<span class="rozet yonetici">Yönetici</span>{% else %}<span class="rozet">Kullanıcı</span>{% endif %}</td>
+          <td data-etiket="Durum">{% if k.aktif %}<span class="rozet etkin">Etkin</span>{% else %}<span class="rozet pasif">Pasif</span>{% endif %}
+            {% if k.aktif and k.sifre_degistirmeli %}<div class="kucuk-not">Şifre değiştirmeyi bekliyor</div>{% endif %}</td>
+          <td data-etiket="Plan">
+            {% if k.plan %}
+            {% set p = plan_bul(k.plan) %}
+            <form method="post" action="{{ url_for('yonetim.plan_degistir', ad=k.ad) }}" class="plan-form">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <select name="plan" aria-label="“{{ k.ad }}” planı">
+                {% for kod, pl in planlar.items() %}
+                <option value="{{ kod }}" {% if k.plan == kod %}selected{% endif %}>{{ pl.ad }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="dugme ikincil kucuk">Kaydet</button>
+            </form>
+            {# Sınırsız planda sayaç tutulmaz: sayı yalnız kotalı planda gösterilir. #}
+            {% if kota_kapali %}<div class="kucuk-not">Kota kapalı (KOTA_KAPALI)</div>
+            {% elif p.aylik_belge is not none %}<div class="kucuk-not">Bu ay {{ k.bu_ay or 0 }} / {{ p.aylik_belge }} belge</div>{% endif %}
+            {% else %}
+            <span class="kucuk-not">Hesap yok; düzenleyiciyi açınca {{ plan_bul(gecis_plan).ad }} planla açılır.</span>
+            {% endif %}
+          </td>
+          <td class="kucuk-not" data-etiket="Son giriş">{{ k.son_giris|tarihsaat if k.son_giris else 'Hiç girmedi' }}</td>
+          <td class="kucuk-not" data-etiket="Ekleyen">{{ k.olusturan }}<div>{{ k.olusturma|tarihsaat }}</div></td>
+          <td><div class="islemler">
+            {% if not kendisi %}
+            <details class="sifirla">
+              <summary class="dugme ikincil kucuk">Şifre sıfırla</summary>
+              <form method="post" action="{{ url_for('yonetim.sifre_sifirla', ad=k.ad) }}" class="form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input name="sifre" type="password" placeholder="Boş: üretilir" autocomplete="new-password" minlength="10">
+                <label class="kutu"><input type="checkbox" name="degistirmeli" value="1" checked> İlk girişte değiştirsin</label>
+                <button type="submit" class="dugme birincil kucuk">Sıfırla</button>
+              </form>
+            </details>
+            <details class="sifirla">
+              <summary class="dugme ikincil kucuk">E-posta</summary>
+              <form method="post" action="{{ url_for('yonetim.eposta_degistir', ad=k.ad) }}" class="form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input name="eposta" type="email" value="{{ k.eposta or '' }}" placeholder="Boş: kaldırılır" maxlength="254" autocomplete="off">
+                <button type="submit" class="dugme birincil kucuk">Kaydet</button>
+              </form>
+            </details>
+            <form method="post" action="{{ url_for('yonetim.aktif', ad=k.ad) }}"
+                  {% if k.aktif %}data-onay="“{{ k.ad }}” pasife alınsın mı? Açık oturumu kapanır, giriş yapamaz."{% endif %}>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="deger" value="{{ '0' if k.aktif else '1' }}">
+              <button type="submit" class="dugme ikincil kucuk">{{ 'Pasife al' if k.aktif else 'Etkinleştir' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('yonetim.yonetici', ad=k.ad) }}"
+                  data-onay="“{{ k.ad }}” {{ 'artık yönetici olmasın mı?' if k.yonetici else 'yönetici yapılsın mı? Kullanıcı ekleyip silebilir.' }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="deger" value="{{ '0' if k.yonetici else '1' }}">
+              <button type="submit" class="dugme ikincil kucuk">{{ 'Yöneticiliği kaldır' if k.yonetici else 'Yönetici yap' }}</button>
+            </form>
+            <form method="post" action="{{ url_for('yonetim.sil', ad=k.ad) }}"
+                  data-onay="“{{ k.ad }}” kalıcı olarak silinsin mi? Bu geri alınamaz; yalnız ayrılmasın isterseniz pasife alın.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="dugme tehlike kucuk">Sil</button>
+            </form>
+            {% else %}
+            <span class="kucuk-not">Kendi hesabınız</span>
+            {% endif %}
+          </div></td>
+        </tr>
+        {% endfor %}
+        {% if vt_var and not okuma_hatasi and not kullanicilar %}
+        <tr><td colspan="7" class="kucuk-not">Veritabanında henüz kullanıcı yok.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+    </div>
+  </section>
+
+  {% if vt_var and not okuma_hatasi %}
+  <section class="kart">
+    <h2>Yönetim kaydı</h2>
+    {% if kayitlar %}
+    {% if kayitlar|length >= kayit_siniri %}<p class="kucuk-not">Son {{ kayit_siniri }} kayıt gösteriliyor.</p>{% endif %}
+    <ul class="kayit-listesi">
+      {% for r in kayitlar %}
+      <li><span class="kucuk-not">{{ r.zaman|tarihsaat }}</span> <strong>{{ r.yapan }}</strong>:
+        “{{ r.hedef }}” {{ r.islem }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="kucuk-not">Henüz kayıt yok.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+{% block betik %}<script src="{{ url_for('static', filename='yonetim.js') }}"></script>{% endblock %}

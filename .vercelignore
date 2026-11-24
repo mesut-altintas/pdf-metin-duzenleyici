@@ -1,0 +1,14 @@
+# Yerel gizli değerler ve geliştirme dosyaları Vercel'e yüklenmez.
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+tests/
+.git/
+.DS_Store
+
+# Yerel çalışma notları
+CLAUDE.md

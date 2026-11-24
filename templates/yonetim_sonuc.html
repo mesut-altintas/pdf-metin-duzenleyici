@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block baslik %}{{ baslik }} · Yönetim{% endblock %}
+{% block icerik %}
+<div class="kart dar">
+  <h1>{{ baslik }}</h1>
+  <p>Kullanıcı: <strong>{{ ad }}</strong></p>
+  {% if sifre %}
+  <p>Üretilen şifre:</p>
+  <div class="sifre-kutu">
+    <code id="uretilen-sifre">{{ sifre }}</code>
+    <button type="button" class="dugme ikincil kucuk" data-kopyala="uretilen-sifre">Kopyala</button>
+  </div>
+  <p class="uyari">Bu şifre bir daha gösterilmez. Kullanıcıya güvenli bir yoldan iletin.</p>
+  {% else %}
+  <p>Belirlediğiniz şifre kaydedildi.</p>
+  {% endif %}
+  {% if degistirmeli %}<p class="kucuk-not">Kullanıcıdan ilk girişte şifresini değiştirmesi istenecek.</p>{% endif %}
+  <p><a class="dugme birincil" href="{{ url_for('yonetim.liste') }}">Kullanıcı listesine dön</a></p>
+</div>
+{% endblock %}
+{% block betik %}<script src="{{ url_for('static', filename='yonetim.js') }}"></script>{% endblock %}

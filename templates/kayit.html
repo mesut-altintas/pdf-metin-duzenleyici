@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block baslik %}Hesap oluştur · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="giris-kutu">
+  <div class="giris-baslik">
+    <img src="{{ url_for('static', filename='simge/simge.svg') }}" alt="" width="56" height="56">
+    <h1>Hesap oluştur</h1>
+    <p class="kucuk-not">E-posta adresinize bir bağlantı göndereceğiz; hesabınızı o bağlantıdan açarsınız.</p>
+  </div>
+  {% if hata %}<p class="uyari hata">{{ hata }}</p>{% endif %}
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>E-posta
+      <input name="eposta" type="email" value="{{ eposta }}" autocomplete="email" autocapitalize="none" spellcheck="false" required autofocus maxlength="254">
+    </label>
+    {% include '_gizli_alan.html' %}
+    <button type="submit" class="dugme birincil">Bağlantı gönder</button>
+  </form>
+  <p class="giris-baglantilar"><a href="{{ url_for('giris.giris') }}">Hesabım var, giriş yap</a></p>
+  <p class="kucuk-not ortala">Ücretsiz planda ayda 3 belge düzenleyip indirebilirsiniz. Dosyalarınız saklanmaz.</p>
+</div>
+{% endblock %}

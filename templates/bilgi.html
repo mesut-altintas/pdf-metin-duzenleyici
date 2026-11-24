@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block baslik %}{{ baslik }} · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<div class="giris-kutu">
+  <div class="giris-baslik"><h1>{{ baslik }}</h1></div>
+  <p class="{{ 'uyari hata' if hata else 'uyari' }}">{{ mesaj }}</p>
+  <p class="giris-baglantilar">
+    <a href="{{ url_for('giris.giris') }}">Giriş sayfası</a>
+    {% if hata and kayit_acik %}<a href="{{ url_for('kayit.kayit') }}">Yeni bağlantı iste</a>{% endif %}
+  </p>
+</div>
+{% endblock %}

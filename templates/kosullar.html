@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block baslik %}Kullanım koşulları · PDF Metin Düzenleyici{% endblock %}
+{% block icerik %}
+<article class="kart metin-sayfa">
+  <p class="uyari taslak-not">TASLAK — avukat onayı bekliyor. Köşeli parantezli yerler doldurulmadan kayıt açılmamalı.</p>
+  <h1>Kullanım koşulları</h1>
+  <p class="kucuk-not">Sürüm: {{ kosul_surumu }}</p>
+
+  <h2>1. Taraflar ve hizmet</h2>
+  <p>Bu koşullar, [SATICI UNVANI] ("biz") tarafından sunulan PDF Metin Düzenleyici hizmetinin
+    ("hizmet") kullanımını düzenler. Hizmet, tarayıcıdan bir PDF dosyasındaki metni değiştirip
+    sonucu cihazınıza indirmenizi sağlar.</p>
+
+  <p>Hizmetin kaynak kodu GNU Affero Genel Kamu Lisansı sürüm 3 (AGPL-3.0) ile
+    <a href="{{ kaynak_adresi }}" rel="noopener">açık olarak yayımlanır</a>. Bu lisans kodun kendisi
+    içindir; hizmetin kullanımı bu koşullara tabidir.</p>
+
+  <h2>2. Hesap</h2>
+  <ul>
+    <li>Hesap, e-posta adresinize gönderilen bağlantıyla açılır. Hesap kişiseldir; şifrenizi
+      başkasıyla paylaşmayın.</li>
+    <li>Hesabınızla yapılan işlemlerden siz sorumlusunuz. Yetkisiz kullanım fark ederseniz
+      [İLETİŞİM E-POSTASI] adresine bildirin.</li>
+  </ul>
+
+  <h2>3. Planlar ve kullanım hakkı</h2>
+  <ul>
+    <li>Ücretsiz planda takvim ayı başına (İstanbul saatiyle) 3 farklı belge düzenleyip
+      indirebilirsiniz. Aynı belgeyi o ay yeniden düzenleyip indirmeniz bir kez sayılır.
+      Önizleme de indirme gibi sayılır, çünkü tam belge cihazınıza iner.</li>
+    <li>Hak her ayın ilk günü yenilenir; kullanılmayan hak sonraki aya devretmez.</li>
+    <li>Ücretli planlar ve fiyatları: [ÜCRETLİ PLANLAR, ÖDEME, İADE VE CAYMA HAKKI — ödeme
+      altyapısıyla birlikte eklenecek].</li>
+  </ul>
+
+  <h2>4. Belgeleriniz</h2>
+  <ul>
+    <li>Yüklediğiniz dosya yalnız işlem sırasında sunucunun belleğinde durur; diske,
+      veritabanına ya da kayıtlara yazılmaz ve saklanmaz. Sonucu siz indirirsiniz.</li>
+    <li>Değiştirilen metin, asıl yazı tipi kullanılamadığında başka bir yazı tipiyle yazılabilir.
+      İndirdiğiniz belgeyi kullanmadan önce kontrol etmek sizin sorumluluğunuzdadır.</li>
+  </ul>
+
+  <h2>5. Yasak kullanım</h2>
+  <p>Hizmeti yalnız değiştirme hakkına sahip olduğunuz belgelerde kullanabilirsiniz. Resmî belge,
+    fatura, sözleşme, diploma ve benzeri belgelerde sahtecilik yapmak, başkasını yanıltmak ya da
+    hukuka aykırı herhangi bir amaçla kullanmak yasaktır. Bu durumda hesabınızı uyarı yapmadan
+    kapatabilir, yasal yükümlülüklerimizi yerine getiririz.</p>
+
+  <h2>6. Hizmetin sunulması ve sorumluluk</h2>
+  <p>Hizmeti kesintisiz ve hatasız sunmak için çalışırız ancak bunu garanti etmeyiz.
+    [SORUMLULUĞUN SINIRI — avukat].</p>
+
+  <h2>7. Değişiklik</h2>
+  <p>Bu koşulları değiştirebiliriz. Değişiklik bu sayfada yeni sürüm numarasıyla yayımlanır;
+    [ÖNEMLİ DEĞİŞİKLİKTE BİLDİRİM USULÜ — avukat].</p>
+
+  <h2>8. Uygulanacak hukuk</h2>
+  <p>Bu koşullara Türkiye Cumhuriyeti hukuku uygulanır. [YETKİLİ MAHKEME / TÜKETİCİ HAKEM HEYETİ — avukat].</p>
+
+  <h2>9. Satıcı bilgileri</h2>
+  <p>[SATICI UNVANI] · [ADRES] · [VERGİ DAİRESİ VE NUMARASI / MERSİS] · [İLETİŞİM E-POSTASI]</p>
+</article>
+{% endblock %}
