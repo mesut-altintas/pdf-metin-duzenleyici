@@ -41,6 +41,7 @@ Testler:
 | `KOTA_KAPALI` | `1` ise aylık belge kotası kapalı: sayılmaz, ekranda sayaç çizilmez (`docs/plan-kota.md`). |
 | `RESEND_API_KEY`, `EPOSTA_GONDEREN`, `UYGULAMA_ADRESI` | E-posta gönderimi (Resend). Üçü de doluysa "Şifremi unuttum" açık; bağlantılar `UYGULAMA_ADRESI`'nden kurulur (`docs/kayit.md`). |
 | `KAYIT_ACIK` | `1` ise herkes e-postayla kayıt olabilir (e-posta da tanımlı olmalı). Varsayılan kapalı. |
+| `RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET` | "Ben robot değilim" (Google reCAPTCHA v2). İkisi de doluysa kayıt ve şifremi unuttum formlarında kutu çıkar; `ROBOT_DOGRULAMA_KAPALI=1` kapatır. |
 
 ## Vercel'e yayın
 
@@ -80,6 +81,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.15 | 24.11.2026 | Kayıt ve şifremi unuttum formlarında "Ben robot değilim" (reCAPTCHA v2); aydınlatma metnine Google aktarımı |
 | 1.14 | 24.11.2026 | Alt bilgi sadeleşti: kaynak bağlantısı yeni "Hakkında" sayfasına taşındı |
 | 1.13 | 24.11.2026 | Kullanım koşulları ve aydınlatma metni yeniden yazıldı (taslak); hesabı kapatıp kişisel veriyi anonimleştirme; kullanım kayıtlarında 2 yıl sınırı; kayıtta 18 yaş beyanı |
 | 1.12 | 24.11.2026 | Kaynak kod AGPL-3.0 ile açıldı: alt bilgide çalışan sürümün kaynak bağlantısı, kullanım koşullarında açık kaynak notu |

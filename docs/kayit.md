@@ -48,9 +48,15 @@ alır); "ekleyen" sütununda `(kayıt)` yazar.
   (kayıt ve şifremi unuttum birlikte sayılır). E-posta tabloya parmak iziyle yazılır.
 - Giriş denemesi anahtarındaki ad / e-posta da artık parmak iziyle (1.10'dan önce açıktı).
 - Bot tuzağı: ekran dışındaki "Web sitesi" alanı doluysa ekran aynı, e-posta gitmez.
-- **Kayıt herkese açılmadan önce** bir insan doğrulaması (ör. Cloudflare Turnstile)
-  eklenmeli: `/kayit` başkasının adresine e-posta göndertmek için kullanılabilir; sınır
-  bunu yavaşlatır ama durdurmaz.
+- **"Ben robot değilim" (1.15):** kayıt ve şifremi unuttum formlarında Google reCAPTCHA v2
+  (`robot.py`, düzen portalın `lfa/robot.py`'sinden; kullanıcı Turnstile yerine reCAPTCHA'yı
+  seçti, 24.11.2026). Anahtar yoksa kutu çizilmez, doğrulama atlanır. Geçmezse e-posta gitmez
+  ve istek sınırı sayılmaz. Google'a ulaşılamazsa ya da gizli anahtar hatalıysa istek işlenir,
+  ERROR loglanır (gerçek kullanıcı durmasın; istek sınırı yine geçerli). Kapatma
+  `ROBOT_DOGRULAMA_KAPALI=1`. Anahtarın alan adı listesinde `pdf.altintas.biz` olmalı.
+- **Kayıt herkese açılmadan önce** reCAPTCHA anahtarları Vercel'e girilmeli: `/kayit`
+  başkasının adresine e-posta göndertmek için kullanılabilir; sınır bunu yavaşlatır ama
+  durdurmaz, robot doğrulaması durdurur.
 
 ## Ortam değişkenleri
 
@@ -60,6 +66,8 @@ alır); "ekleyen" sütununda `(kayıt)` yazar.
 | `EPOSTA_GONDEREN` | `PDF Metin Düzenleyici <pdf@altintas.biz>` |
 | `UYGULAMA_ADRESI` | `https://pdf.altintas.biz` (23.11.2026; önce vercel.app adresiydi, bkz. "Alan adı") |
 | `KAYIT_ACIK` | `1` ise kayıt açık. |
+| `RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET` | "Ben robot değilim" (reCAPTCHA v2). İkisi de doluysa kayıt ve şifremi unuttum formlarında kutu çıkar. |
+| `ROBOT_DOGRULAMA_KAPALI` | `1` ise robot doğrulaması kapalı (anahtar dolu olsa da). |
 
 Testlerde gerçek gönderim kapalı (`conftest._gercek_eposta_yok`): `eposta._ilet`'i
 değiştirmeyen test e-posta göndermeye kalkarsa düşer.
@@ -95,7 +103,7 @@ Aydınlatma metni md. 7'nin kodda karşılığı:
 ## Açık konular
 
 - Yasal metinlerin köşeli parantezli yerleri (avukat) ve satıcı kimliği.
-- Kayıt açılmadan önce insan doğrulaması.
+- Kayıt açılmadan önce reCAPTCHA anahtarları (Google'da `pdf.altintas.biz` için).
 - Ürün alan adı alınınca gönderen ve uygulama adresi.
 - Vercel istek logu bağlantıyı sorgu dizgisiyle yazar (belirteç ve içindeki adres 1 saat
   logda okunur); belirteci adres çubuğunun `#` kısmına almak düşünülebilir.
