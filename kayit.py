@@ -42,7 +42,7 @@ SIFIRLAMA_SURESI = 3600
 ADRES_SINIRI = 10            # aynı istemci adresinden 15 dakikada e-posta isteği
 EPOSTA_SINIRI = 3            # aynı e-postaya 15 dakikada
 # Kabul edilen koşulların sürümü; metin değişince artar (kullanicilar.kosul_surum).
-KOSUL_SURUMU = 'taslak-2026-11-22'
+KOSUL_SURUMU = 'taslak-2026-11-24'
 UYGULAMA = 'PDF Metin Düzenleyici'
 
 

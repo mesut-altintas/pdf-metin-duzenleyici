@@ -4,61 +4,104 @@
 <article class="kart metin-sayfa">
   <p class="uyari taslak-not">TASLAK — avukat onayı bekliyor. Köşeli parantezli yerler doldurulmadan kayıt açılmamalı.</p>
   <h1>Kullanım koşulları</h1>
-  <p class="kucuk-not">Sürüm: {{ kosul_surumu }}</p>
+  <p class="kucuk-not">Sürüm: {{ kosul_surumu }} · Son güncelleme: 24.11.2026</p>
 
-  <h2>1. Taraflar ve hizmet</h2>
-  <p>Bu koşullar, [SATICI UNVANI] ("biz") tarafından sunulan PDF Metin Düzenleyici hizmetinin
-    ("hizmet") kullanımını düzenler. Hizmet, tarayıcıdan bir PDF dosyasındaki metni değiştirip
-    sonucu cihazınıza indirmenizi sağlar.</p>
+  <h2>1. Taraflar ve kabul</h2>
+  <p>Bu koşullar, [SATICI UNVANI] ("biz") ile PDF Metin Düzenleyici hizmetini ("hizmet") kullanan
+    kişi ("siz") arasındaki ilişkiyi düzenler. Hesap oluştururken koşulları kabul ettiğinizi
+    onaylarsınız; kabul ettiğiniz sürüm ve zaman hesabınızla birlikte kaydedilir. Kişisel
+    verilerinizin nasıl işlendiği <a href="{{ url_for('kayit.gizlilik') }}">aydınlatma metninde</a>
+    anlatılır.</p>
 
+  <h2>2. Hizmet</h2>
+  <p>Hizmet, tarayıcıdan yüklediğiniz bir PDF dosyasındaki metni değiştirmenizi, yeni metin
+    eklemenizi ve sonucu cihazınıza indirmenizi sağlar. Değişiklik yalnız seçtiğiniz metne
+    uygulanır; uygulama her üretimde dokunulmayan metnin yerinde kaldığını denetler, kalmadıysa
+    dosyayı üretmez.</p>
   <p>Hizmetin kaynak kodu GNU Affero Genel Kamu Lisansı sürüm 3 (AGPL-3.0) ile
     <a href="{{ kaynak_adresi }}" rel="noopener">açık olarak yayımlanır</a>. Bu lisans kodun kendisi
-    içindir; hizmetin kullanımı bu koşullara tabidir.</p>
+    içindir; hizmetin kullanımı bu koşullara tabidir. "PDF Metin Düzenleyici" adı ve simgesi
+    lisansın kapsamında değildir.</p>
 
-  <h2>2. Hesap</h2>
+  <h2>3. Hesap</h2>
   <ul>
-    <li>Hesap, e-posta adresinize gönderilen bağlantıyla açılır. Hesap kişiseldir; şifrenizi
-      başkasıyla paylaşmayın.</li>
+    <li>Hesap açmak için 18 yaşını doldurmuş olmanız gerekir.</li>
+    <li>Hesap, e-posta adresinize gönderilen bağlantıyla açılır. Kendinize ait, doğru bir e-posta
+      adresi kullanın; şifrenizi kimseyle paylaşmayın. Hesap kişiseldir.</li>
     <li>Hesabınızla yapılan işlemlerden siz sorumlusunuz. Yetkisiz kullanım fark ederseniz
-      [İLETİŞİM E-POSTASI] adresine bildirin.</li>
+      şifrenizi hemen değiştirin ve [İLETİŞİM E-POSTASI] adresine bildirin.</li>
+    <li>Hesabınızın kapatılmasını istediğiniz zaman [İLETİŞİM E-POSTASI] adresine yazarak
+      isteyebilirsiniz.</li>
   </ul>
 
-  <h2>3. Planlar ve kullanım hakkı</h2>
+  <h2>4. Planlar ve kullanım hakkı</h2>
   <ul>
     <li>Ücretsiz planda takvim ayı başına (İstanbul saatiyle) 3 farklı belge düzenleyip
       indirebilirsiniz. Aynı belgeyi o ay yeniden düzenleyip indirmeniz bir kez sayılır.
       Önizleme de indirme gibi sayılır, çünkü tam belge cihazınıza iner.</li>
-    <li>Hak her ayın ilk günü yenilenir; kullanılmayan hak sonraki aya devretmez.</li>
-    <li>Ücretli planlar ve fiyatları: [ÜCRETLİ PLANLAR, ÖDEME, İADE VE CAYMA HAKKI — ödeme
-      altyapısıyla birlikte eklenecek].</li>
+    <li>Hak her ayın ilk günü yenilenir; kullanılmayan hak sonraki aya devretmez. Başarısız
+      kalan işlem sayılmaz.</li>
+    <li>Kullanım hakkını aşmak için birden fazla ücretsiz hesap açmak yasaktır.</li>
+    <li>Ücretli planlar, fiyatlar, ödeme, iade ve cayma hakkı: [ödeme altyapısıyla birlikte
+      ön bilgilendirme formu ve mesafeli satış sözleşmesi olarak eklenecek].</li>
   </ul>
 
-  <h2>4. Belgeleriniz</h2>
+  <h2>5. Belgeleriniz</h2>
   <ul>
-    <li>Yüklediğiniz dosya yalnız işlem sırasında sunucunun belleğinde durur; diske,
-      veritabanına ya da kayıtlara yazılmaz ve saklanmaz. Sonucu siz indirirsiniz.</li>
-    <li>Değiştirilen metin, asıl yazı tipi kullanılamadığında başka bir yazı tipiyle yazılabilir.
-      İndirdiğiniz belgeyi kullanmadan önce kontrol etmek sizin sorumluluğunuzdadır.</li>
+    <li>Yüklediğiniz dosya yalnız istediğiniz işlem için, işlem sırasında sunucunun belleğinde
+      işlenir; diske, veritabanına ya da kayıtlara yazılmaz ve saklanmaz. Sonucu siz
+      indirirsiniz. Belgenizin içeriğini incelemeyiz.</li>
+    <li>Belgeler ve içerikleri üzerindeki bütün haklar size ya da hak sahibine aittir; hizmeti
+      kullanmanız bize bu belgeler üzerinde hiçbir hak vermez.</li>
+    <li>Asıl yazı tipi kullanılamadığında değiştirilen metin benzer bir yazı tipiyle yazılabilir;
+      uygulama bu durumda uyarı gösterir. İndirdiğiniz belgeyi kullanmadan önce kontrol etmek
+      sizin sorumluluğunuzdadır.</li>
   </ul>
 
-  <h2>5. Yasak kullanım</h2>
-  <p>Hizmeti yalnız değiştirme hakkına sahip olduğunuz belgelerde kullanabilirsiniz. Resmî belge,
-    fatura, sözleşme, diploma ve benzeri belgelerde sahtecilik yapmak, başkasını yanıltmak ya da
-    hukuka aykırı herhangi bir amaçla kullanmak yasaktır. Bu durumda hesabınızı uyarı yapmadan
+  <h2>6. Yasak kullanım</h2>
+  <p>Hizmeti yalnız değiştirme hakkına sahip olduğunuz belgelerde ve hukuka uygun amaçlarla
+    kullanabilirsiniz. Özellikle şunlar yasaktır:</p>
+  <ul>
+    <li>resmî belge, fatura, sözleşme, diploma, sağlık raporu ve benzeri belgelerde sahtecilik
+      yapmak ya da başkasını yanıltacak belge üretmek;</li>
+    <li>başkasının fikrî mülkiyet, kişilik ya da kişisel veri haklarını ihlal eden belgeler
+      üzerinde işlem yapmak;</li>
+    <li>hizmetin güvenlik önlemlerini, kullanım hakkı sınırlarını ya da istek sınırlarını aşmaya
+      çalışmak; otomatik araçlarla hizmete olağan dışı yük bindirmek;</li>
+    <li>kayıt ve şifre yenileme formlarını başkasının adresine e-posta göndertmek için
+      kullanmak.</li>
+  </ul>
+  <p>Bu koşullara aykırı kullanımda hesabınızı önceden bildirmeden askıya alabilir ya da
     kapatabilir, yasal yükümlülüklerimizi yerine getiririz.</p>
 
-  <h2>6. Hizmetin sunulması ve sorumluluk</h2>
-  <p>Hizmeti kesintisiz ve hatasız sunmak için çalışırız ancak bunu garanti etmeyiz.
-    [SORUMLULUĞUN SINIRI — avukat].</p>
+  <h2>7. Hizmetin sunulması ve değişiklikler</h2>
+  <p>Hizmeti kesintisiz ve hatasız sunmak için özen gösteririz, ancak bunu garanti edemeyiz.
+    Bakım, güvenlik ya da hizmet sağlayıcılarımızdan kaynaklanan kesintiler olabilir. Hizmetin
+    özelliklerini değiştirebilir, geliştirebilir ya da sona erdirebiliriz; ücretli planları
+    etkileyen değişiklikler, ödeme altyapısıyla eklenecek sözleşme hükümlerine tabidir.</p>
 
-  <h2>7. Değişiklik</h2>
-  <p>Bu koşulları değiştirebiliriz. Değişiklik bu sayfada yeni sürüm numarasıyla yayımlanır;
-    [ÖNEMLİ DEĞİŞİKLİKTE BİLDİRİM USULÜ — avukat].</p>
+  <h2>8. Sorumluluk</h2>
+  <p>Kast ve ağır ihmal hâlleri ile kanunen sınırlanamayan sorumluluklar saklı kalmak üzere,
+    hizmetin kullanılmasından ya da kullanılamamasından doğan dolaylı zararlardan ve
+    indirdiğiniz belgenin kullanımından doğan sonuçlardan sorumlu değiliz. Belgeleriniz
+    saklanmadığı için, indirmediğiniz bir sonucu sonradan size veremeyiz.
+    [Ücretli planlarda sorumluluğun üst sınırı — avukat.]</p>
 
-  <h2>8. Uygulanacak hukuk</h2>
-  <p>Bu koşullara Türkiye Cumhuriyeti hukuku uygulanır. [YETKİLİ MAHKEME / TÜKETİCİ HAKEM HEYETİ — avukat].</p>
+  <h2>9. Koşulların değişmesi</h2>
+  <p>Bu koşulları değiştirebiliriz. Yeni sürüm bu sayfada sürüm numarası ve tarihiyle
+    yayımlanır. Haklarınızı ya da yükümlülüklerinizi etkileyen değişiklikleri yürürlüğe
+    girmeden en az 15 gün önce kayıtlı e-posta adresinize bildiririz. Yürürlük tarihinden
+    sonra hizmeti kullanmaya devam etmeniz yeni sürümü kabul ettiğiniz anlamına gelir;
+    kabul etmiyorsanız hesabınızın kapatılmasını isteyebilirsiniz.</p>
 
-  <h2>9. Satıcı bilgileri</h2>
+  <h2>10. Uygulanacak hukuk ve uyuşmazlıklar</h2>
+  <p>Bu koşullara Türkiye Cumhuriyeti hukuku uygulanır. Tüketiciler, 6502 sayılı Tüketicinin
+    Korunması Hakkında Kanun kapsamındaki uyuşmazlıklarda her yıl belirlenen parasal sınırlar
+    içinde yerleşim yerlerindeki ya da işlemin yapıldığı yerdeki Tüketici Hakem Heyetine, bu
+    sınırları aşan uyuşmazlıklarda Tüketici Mahkemesine başvurabilir. Tüketici olmayan
+    kullanıcılarla uyuşmazlıklarda [İL] mahkemeleri ve icra daireleri yetkilidir.</p>
+
+  <h2>11. Satıcı bilgileri ve iletişim</h2>
   <p>[SATICI UNVANI] · [ADRES] · [VERGİ DAİRESİ VE NUMARASI / MERSİS] · [İLETİŞİM E-POSTASI]</p>
 </article>
 {% endblock %}
