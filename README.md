@@ -81,6 +81,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.16 | 24.11.2026 | Kullanım koşulları: tüketici olmayanlarla uyuşmazlıkta İstanbul mahkemeleri ve icra daireleri |
 | 1.15 | 24.11.2026 | Kayıt ve şifremi unuttum formlarında "Ben robot değilim" (reCAPTCHA v2); aydınlatma metnine Google aktarımı |
 | 1.14 | 24.11.2026 | Alt bilgi sadeleşti: kaynak bağlantısı yeni "Hakkında" sayfasına taşındı |
 | 1.13 | 24.11.2026 | Kullanım koşulları ve aydınlatma metni yeniden yazıldı (taslak); hesabı kapatıp kişisel veriyi anonimleştirme; kullanım kayıtlarında 2 yıl sınırı; kayıtta 18 yaş beyanı |
