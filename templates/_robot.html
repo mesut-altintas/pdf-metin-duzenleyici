@@ -1,0 +1,8 @@
+{# "Ben robot değilim" (Google reCAPTCHA v2, robot.py). Anahtar yoksa ya da
+   ROBOT_DOGRULAMA_KAPALI=1 ise hiçbir şey çizilmez, Google'a istek de gitmez. #}
+{% if robot_anahtari %}
+<div class="robot-kutu">
+  <div class="g-recaptcha" data-sitekey="{{ robot_anahtari }}"></div>
+</div>
+<script src="https://www.google.com/recaptcha/api.js?hl=tr" async defer></script>
+{% endif %}

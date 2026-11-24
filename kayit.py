@@ -31,6 +31,7 @@ from werkzeug.security import generate_password_hash
 import eposta
 import kullanicilar as vt
 import kullanim
+import robot
 from giris import (AD_DESENI, EN_AZ_SIFRE, EPOSTA_DESENI, istemci_adresi, mevcut_kullanici,
                    ortam_kullanicilari, sifre_kurali)
 
@@ -56,7 +57,8 @@ def sifirlama_acik():
 
 @kayit_bp.app_context_processor
 def sablona_bayraklar():
-    return {'kayit_acik': kayit_acik(), 'sifirlama_acik': sifirlama_acik()}
+    return {'kayit_acik': kayit_acik(), 'sifirlama_acik': sifirlama_acik(),
+            'robot_anahtari': robot.site_anahtari()}
 
 
 # ---------------------------------------------------------------- yardımcılar
@@ -98,6 +100,18 @@ def _sinirda(adres_):
 def _bot_mu():
     """Gizli alan doluysa bot: cevap aynı, hiçbir şey yapılmaz."""
     return bool(request.form.get('web_sitesi'))
+
+
+ROBOT_HATASI = 'Robot olmadığınızı doğrulamak için kutuyu işaretleyin.'
+
+
+def _robot_hatasi():
+    """reCAPTCHA etkinse ve geçmediyse hata metni (robot.py). Google'a ulaşılamazsa
+    istek işlenir (ERROR loglanır); istek sınırı yine geçerli."""
+    if robot.site_anahtari() and \
+            robot.dogrula(request.form.get('g-recaptcha-response'), istemci_adresi()) == robot.GECMEDI:
+        return ROBOT_HATASI
+    return None
 
 
 def _bilgi(baslik, mesaj, kod=200, hata=False):
@@ -152,6 +166,7 @@ def kayit():
     hata, deger = None, ''
     if request.method == 'POST':
         deger, hata = _eposta_al()
+        hata = hata or _robot_hatasi()
         if not hata and not _bot_mu():
             try:
                 if _sinirda(deger):
@@ -242,6 +257,7 @@ def sifremi_unuttum():
     hata, deger = None, ''
     if request.method == 'POST':
         deger, hata = _eposta_al()
+        hata = hata or _robot_hatasi()
         if not hata and not _bot_mu():
             try:
                 if _sinirda(deger):

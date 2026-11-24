@@ -13,6 +13,7 @@
       <input name="eposta" type="email" value="{{ eposta }}" autocomplete="email" autocapitalize="none" spellcheck="false" required autofocus maxlength="254">
     </label>
     {% include '_gizli_alan.html' %}
+    {% include '_robot.html' %}
     <button type="submit" class="dugme birincil">Bağlantı gönder</button>
   </form>
   <p class="giris-baglantilar"><a href="{{ url_for('giris.giris') }}">Girişe dön</a></p>

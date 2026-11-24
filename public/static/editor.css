@@ -82,6 +82,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
 .ortala { text-align: center; }
 /* Bot tuzağı: ekran dışında (display:none bazı botlarca atlanır). */
 .gizli-alan { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.robot-kutu { display: flex; justify-content: center; margin: 12px 0 4px; min-height: 78px; }
 .metin-sayfa { max-width: 760px; margin: 24px auto; line-height: 1.6; }
 .metin-sayfa h1 { font-size: 22px; margin: 8px 0; }
 .metin-sayfa h2 { font-size: 16px; margin: 20px 0 6px; }

@@ -13,7 +13,8 @@ os.environ.pop('VERCEL', None)
 os.environ.pop('DATABASE_URL', None)   # testler hiçbir zaman gerçek veritabanına bağlanmaz
 os.environ['SECRET_KEY'] = 'test-anahtari'
 os.environ['KULLANICILAR'] = f'deneme={generate_password_hash(TEST_SIFRE, method="pbkdf2:sha256:1000")}'
-for _ad in ('RESEND_API_KEY', 'EPOSTA_GONDEREN', 'UYGULAMA_ADRESI', 'KAYIT_ACIK', 'KOTA_KAPALI'):
+for _ad in ('RESEND_API_KEY', 'EPOSTA_GONDEREN', 'UYGULAMA_ADRESI', 'KAYIT_ACIK', 'KOTA_KAPALI',
+            'RECAPTCHA_SITE_KEY', 'RECAPTCHA_SECRET', 'ROBOT_DOGRULAMA_KAPALI'):
     os.environ.pop(_ad, None)
 
 
@@ -26,6 +27,12 @@ def _gercek_eposta_yok(monkeypatch):
     def kapali(govde):
         raise AssertionError('testte gerçek e-posta gönderilmeye çalışıldı')
     monkeypatch.setattr(eposta, '_ilet', kapali)
+
+    import robot
+
+    def robot_kapali(veri):
+        raise AssertionError('testte Google robot doğrulamasına gidilmeye çalışıldı')
+    monkeypatch.setattr(robot, '_sor', robot_kapali)
 
 ORNEKLER = Path(__file__).resolve().parent / 'ornekler'
 
