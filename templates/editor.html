@@ -56,6 +56,16 @@
       <strong>Paragraf düzenle</strong>
       <span class="ozellik-aciklama">Uzayan metni satırlara yeniden dizer, hizayı korur.</span>
     </li>
+    <li>
+      <span class="ozellik-simge" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg></span>
+      <strong>Resim ekle</strong>
+      <span class="ozellik-aciklama">İmza, kaşe ya da logo koyar; taşıyıp boyutlandırırsınız.</span>
+    </li>
+    <li class="turuncu">
+      <span class="ozellik-simge" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="m9 13 2 2 4-4"/></svg></span>
+      <strong>Word / Excel'e çevir</strong>
+      <span class="ozellik-aciklama">Belgeyi düzenlenebilir Word'e, tablolarını Excel'e aktarır.</span>
+    </li>
   </ul>
 </section>
 
@@ -128,6 +138,13 @@
 
       <p id="kota-uyari" class="uyari hata" hidden></p>
       <p id="kota-calisma" class="kucuk-not kota-calisma" hidden></p>
+      <!-- Çevirme her zaman görünür (telefonda kapalı panelin dışında): değişiklik gerektirmez. -->
+      <div class="cevir-satir" role="group" aria-labelledby="cevir-etiket">
+        <span class="kucuk-not" id="cevir-etiket">Çevir:</span>
+        <button type="button" class="dugme ikincil kucuk" id="cevir-word" data-bicim="word">Word'e çevir</button>
+        <button type="button" class="dugme ikincil kucuk" id="cevir-excel" data-bicim="excel">Excel'e çevir</button>
+      </div>
+      <p class="kucuk-not cevir-not masaustu-yalniz">Ekrandaki değişiklikler de çevrilir. Excel'e yalnız tablolar aktarılır.</p>
       <div class="eylemler">
         <button type="button" class="dugme ikincil" id="onizle" disabled>Önizle</button>
         <button type="button" class="dugme ikincil" id="paylas" hidden disabled>Paylaş</button>

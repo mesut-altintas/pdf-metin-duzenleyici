@@ -20,6 +20,7 @@
     <li>Boş bir yere yeni metin ekleme</li>
     <li>İmza, kaşe ya da logo gibi resim ekleme; taşıma, boyutlandırma, döndürme, beyaz zemini kaldırma</li>
     <li>Uzayan metni paragraf olarak yeniden dizme</li>
+    <li>Belgeyi düzenlenebilir Word dosyasına, tablolarını Excel'e çevirme</li>
     <li>Değişiklik listesini kaydedip aynı şablona yeniden uygulama</li>
     <li>Telefonda kullanma ve ana ekrana ekleme</li>
   </ul>
@@ -28,7 +29,9 @@
   <p>Uygulamanın kaynak kodu GNU Affero Genel Kamu Lisansı sürüm 3 ({{ lisans }}) ile açıktır.
     Şu an çalışan sürümün ({{ surum }}) kodu:
     <a href="{{ kaynak_adresi }}" rel="noopener">{{ kaynak_adresi }}</a>.</p>
-  <p>PDF işleme için Artifex Software'in PyMuPDF kütüphanesi ({{ lisans }}) kullanılır.</p>
+  <p>PDF işleme için Artifex Software'in PyMuPDF kütüphanesi ({{ lisans }}) kullanılır. Word ve
+    Excel'e çevirmede pdf2docx (MIT), python-docx (MIT), openpyxl (MIT), OpenCV (Apache-2.0) ve
+    NumPy (BSD) kullanılır.</p>
 
   <p class="kucuk-not">Sürüm {{ surum }} · {{ telif }} ·
     <a href="{{ url_for('kayit.kosullar') }}">Kullanım koşulları</a> ·

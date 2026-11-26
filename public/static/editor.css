@@ -141,7 +141,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
 .gizlilik-notu svg { flex: none; }
 .ozellikler {
   list-style: none; margin: 4px 0 0; padding: 0;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;
 }
 .ozellikler li {
   background: var(--yuzey); border: 1px solid #e3e7ee; border-radius: 14px; padding: 16px;
@@ -218,6 +218,9 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
 }
 .dosya-satir { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .dosya-adi { font-weight: 600; word-break: break-all; }
+.cevir-satir { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+.cevir-satir .dugme { flex: 1; }
+.cevir-not { margin: 4px 0 0; }
 .ara { display: block; margin-top: 14px; font-size: 13px; color: var(--soluk); }
 .ara input {
   display: block; width: 100%; margin-top: 4px; padding: 7px 9px;
@@ -277,7 +280,7 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
 
 @media (max-width: 900px) {
   main { padding: 12px; }
-  .calisma { grid-template-columns: 1fr; padding-bottom: 150px; }
+  .calisma { grid-template-columns: 1fr; padding-bottom: 196px; }
   /* Yan panel alttan açılan çekmece: kapalıyken yalnız başlık ve düğmeler. */
   .yan { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 20; }
   .yan-ic {
@@ -288,8 +291,9 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
   .yan-ac { display: flex; }
   .yan:not(.acik) .yan-govde { display: none; }
   .masaustu-yalniz { display: none; }
-  .eylemler { margin-top: 4px; }
+  .eylemler { margin-top: 6px; }
   .eylemler .dugme { padding: 10px 12px; }
+  .cevir-satir { margin-top: 4px; }
   .secenekler { grid-template-columns: 1fr; }
   /* iOS, 16 pikselden küçük yazılı kutuya dokununca sayfayı kendiliğinden yakınlaştırır. */
   input, select, textarea { font-size: 16px !important; }

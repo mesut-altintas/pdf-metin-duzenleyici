@@ -234,3 +234,10 @@ def test_cevir_hatasi_json_ile_doner(istemci, ornek):
     r = istemci.post('/api/cevir', headers=_xhr(istemci), data={
         'pdf': (io.BytesIO(ornek('chrome-paragraf.pdf')), 'f.pdf'), 'bicim': 'excel'})
     assert r.status_code == 400 and 'tablo bulunamadı' in r.get_json()['hata']
+
+
+def test_duzenleyicide_cevirme_dugmeleri(istemci):
+    _giris(istemci)
+    sayfa = istemci.get('/').get_data(as_text=True)
+    assert 'id="cevir-word" data-bicim="word"' in sayfa and 'id="cevir-excel" data-bicim="excel"' in sayfa
+    assert "Word / Excel'e çevir" in sayfa

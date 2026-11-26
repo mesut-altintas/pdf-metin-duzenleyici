@@ -88,10 +88,10 @@
 
   // Üretim hatası. Kota dolduysa açıklama düğmelerin üstündeki kutuda; burada kısa not
   // (aynı uzun metin iki kez görünmesin). Değişiklikler yerinde kalır.
-  function uretimHatasi(d, e) {
+  function uretimHatasi(d, e, olmayan = 'PDF oluşturulmadı') {
     if (e.kota) {
       kotaGoster(e.kota);
-      durum(d, 'PDF oluşturulmadı: bu ayki belge hakkınız doldu.', true);
+      durum(d, `${olmayan}: bu ayki belge hakkınız doldu.`, true);
     } else {
       durum(d, e.message, true);
     }
@@ -699,12 +699,12 @@
     }
   }
 
-  function dosyaAdi(yanit) {
+  function dosyaAdi(yanit, yedek) {
     const cd = yanit.headers.get('Content-Disposition') || '';
     const m = cd.match(/filename\*=UTF-8''([^;]+)/i);
     if (m) { try { return decodeURIComponent(m[1]); } catch (_) { /* geç */ } }
     const m2 = cd.match(/filename="?([^";]+)"?/i);
-    return m2 ? m2[1] : dosya.name.replace(/\.pdf$/i, '') + '-duzenlenmis.pdf';
+    return m2 ? m2[1] : dosya.name.replace(/\.pdf$/i, '') + (yedek || '-duzenlenmis.pdf');
   }
 
   function eklemeListesi() {
@@ -724,9 +724,8 @@
       r: Array.from(resimler.entries()).map(([id, r]) => [id, r.sayfa, r.x, r.y, r.w, r.h, pisirmeAnahtari(r)]) });
   }
 
-  async function olustur() {
-    const anahtar = anahtarUret();
-    if (son && son.anahtar === anahtar) return son;
+  // PDF üretimi ve çevirme aynı gövdeyi gönderir: dosya + bütün değişiklikler (pişirilmiş resimler dahil).
+  async function govdeHazirla() {
     const fd = new FormData();
     fd.append('pdf', dosya, dosya.name);
     fd.append('duzeltmeler', JSON.stringify(liste()));
@@ -749,6 +748,13 @@
       const b = r.pisirilmis.blob;
       fd.append(`resim_${id}`, b, `${id}.${b.type === 'image/png' ? 'png' : 'jpg'}`);
     }
+    return fd;
+  }
+
+  async function olustur() {
+    const anahtar = anahtarUret();
+    if (son && son.anahtar === anahtar) return son;
+    const fd = await govdeHazirla();
     const yanit = await istek('/api/uret', fd);
     kotaBaslik(yanit.headers.get('X-Kota'));
     const blob = await yanit.blob();
@@ -756,22 +762,63 @@
     return son;
   }
 
+  // PDF düğmeleri değişiklik ister; çevirme ve "Başka PDF" istemez.
+  const DEGISIKLIK_ISTEYEN = ['#indir', '#onizle', '#paylas'];
   function kilit(acik) {
-    ['#indir', '#onizle', '#paylas', '#baska-dosya'].forEach((s) => { $(s).disabled = acik || (s !== '#baska-dosya' && toplamDegisiklik() === 0); });
+    [...DEGISIKLIK_ISTEYEN, '#baska-dosya', '#cevir-word', '#cevir-excel'].forEach((s) => {
+      $(s).disabled = acik || (DEGISIKLIK_ISTEYEN.includes(s) && toplamDegisiklik() === 0);
+    });
   }
 
-  function indir(s) {
-    const url = URL.createObjectURL(s.blob);
+  function blobIndir(blob, ad) {
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = s.ad;
+    a.download = ad;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
+  function indir(s) {
+    blobIndir(s.blob, s.ad);
     indirildi = true;
     olayBildir('indirildi', { duzeltme: degisiklik.size });
   }
+
+  // ---------- Word / Excel'e çevirme ----------
+  // Ekrandaki değişiklikler dahil (sunucu önce işler, sonra çevirir). Aylık belge hakkından
+  // sayılır; aynı belge ayda bir kez. Uzun belgede bir iki dakika sürebilir (sunucu ölçümü:
+  // 30 sayfalık tablo dolu ekstre Word'e ~1 dk).
+  const CEVIRME = {
+    word: { ad: 'Word', uzanti: '.docx' },
+    excel: { ad: 'Excel', uzanti: '.xlsx' },
+  };
+  document.querySelectorAll('#cevir-word, #cevir-excel').forEach((dugme) => {
+    dugme.addEventListener('click', async () => {
+      const bicim = dugme.dataset.bicim;
+      const c = CEVIRME[bicim];
+      const d = $('#islem-durum');
+      kilit(true);
+      durum(d, `${c.ad} dosyası hazırlanıyor… Uzun belgede bir iki dakika sürebilir.`);
+      try {
+        const fd = await govdeHazirla();
+        fd.append('bicim', bicim);
+        const yanit = await istek('/api/cevir', fd);
+        kotaBaslik(yanit.headers.get('X-Kota'));
+        const ad = dosyaAdi(yanit, c.uzanti);
+        const uyarilar = uyariCoz(yanit.headers.get('X-Uyarilar'));
+        blobIndir(await yanit.blob(), ad);
+        uyarilariGoster(uyarilar);
+        durum(d, `İndirildi: ${ad}`);
+      } catch (e) {
+        uretimHatasi(d, e, `${c.ad} dosyası oluşturulmadı`);
+      } finally {
+        kilit(false);
+      }
+    });
+  });
 
   $('#indir').addEventListener('click', async () => {
     const d = $('#islem-durum');
