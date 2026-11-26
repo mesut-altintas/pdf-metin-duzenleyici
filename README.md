@@ -12,7 +12,7 @@ tarayıcıdan indirilir.
 Canlı: https://pdf.altintas.biz · Flask + [PyMuPDF](https://github.com/pymupdf/PyMuPDF) · Arayüz Türkçe.
 
 Özellikler: metni yerinde değiştirme, toplu bul ve değiştir, yeni metin ve resim ekleme,
-paragraf düzenleme, değişiklik listesini kaydet / yükle, telefonda kullanım (PWA),
+paragraf düzenleme, Word ve Excel'e çevirme, değişiklik listesini kaydet / yükle, telefonda kullanım (PWA),
 kullanıcı yönetimi, aylık belge kotası, e-postayla kayıt ve şifre yenileme.
 
 ## Yerelde çalıştırma
@@ -56,7 +56,8 @@ vercel deploy --prod
 ```
 
 Sınırlar: Vercel işlevinin istek ve yanıt gövdesi 4,5 MB olduğundan dosya en
-fazla 4,4 MB (4.400.000 bayt) ve 40 sayfa olabilir.
+fazla 4,4 MB (4.400.000 bayt) ve 40 sayfa olabilir. İşlev süresi 300 sn (Word / Excel'e
+çevirme uzun sürebiliyor; ölçümler `docs/cevirme.md`).
 
 ## Lisans
 
@@ -72,7 +73,9 @@ kaynak kodunu sunmasını ister. Her sayfanın alt bilgisindeki "Hakkında" sayf
 çalışan sürümün koduna bağlantı verir (`surum.py`: `KAYNAK_DEPO`, `v<SURUM>` etiketi). Kodu kendi sunucunuzda
 çalıştırıyorsanız bağlantıyı kendi deponuza çevirin.
 
-Kullanılan PDF kütüphanesi PyMuPDF (Artifex Software) de AGPL-3.0 lisanslıdır.
+Kullanılan PDF kütüphanesi PyMuPDF (Artifex Software) de AGPL-3.0 lisanslıdır. Word ve
+Excel'e çevirmede pdf2docx (MIT), python-docx (MIT), openpyxl (MIT), OpenCV (Apache-2.0)
+ve NumPy (BSD) kullanılır.
 
 ## Sürümler
 
@@ -81,6 +84,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.18 | 26.11.2026 | Word ve Excel'e çevirme: ekrandaki değişiklikler dahil; Excel'de tablolar tek sayfada, sayfalara bölünmüş tablo birleşir, tutar ve tarih gerçek değer olur; aynı belge hakkından sayılır. Kullanım koşulları ve aydınlatma metni buna göre güncellendi |
 | 1.17 | 26.11.2026 | Resim ekleme: PNG / JPEG; sürükleyerek taşıma, köşeden oranlı ve kenardan serbest boyutlandırma, 90° döndürme, beyaz zemini kaldırma, saydamlık, resmi değiştirme; değişiklik listesine girer |
 | 1.16 | 24.11.2026 | Kullanım koşulları: tüketici olmayanlarla uyuşmazlıkta İstanbul mahkemeleri ve icra daireleri |
 | 1.15 | 24.11.2026 | Kayıt ve şifremi unuttum formlarında "Ben robot değilim" (reCAPTCHA v2); aydınlatma metnine Google aktarımı |
