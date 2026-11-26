@@ -41,6 +41,7 @@ HATALAR = {
     'gorunum': 'görüntü sınırı',
     'izin': 'değiştirme izni yok',
     'eslesmedi': 'metin dosyada bulunamadı',
+    'resim': 'resim okunamadı',
     'denetim': 'güvenlik denetimi durdurdu',
     'kota': 'aylık belge hakkı doldu',
     'kota_okunamadi': 'belge hakkı denetlenemedi',
@@ -63,7 +64,7 @@ def _tamsayi(deger, ust):
 
 
 def kaydet(kullanici, tur, *, basarili=True, hata=None, sayfa=None, boyut=None, duzeltme=None,
-           ekleme=None, uyari=None, sure_ms=None, belge=None):
+           ekleme=None, uyari=None, sure_ms=None, belge=None, resim=None):
     """Olayı yazar; yazıldıysa True. Hiçbir durumda istisna atmaz."""
     global _son_hata
     if not vt.tanimli() or not kullanici or tur not in TURLER:
@@ -75,10 +76,10 @@ def kaydet(kullanici, tur, *, basarili=True, hata=None, sayfa=None, boyut=None, 
     try:
         vt.yazma(
             'INSERT INTO kullanim_olayi (kullanici, tur, basarili, hata, sayfa, boyut, duzeltme, ekleme, '
-            'uyari, sure_ms, belge) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+            'uyari, sure_ms, belge, resim) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
             (kullanici, tur, bool(basarili), hata, _tamsayi(sayfa, 100_000), _tamsayi(boyut, 2_000_000_000),
              _tamsayi(duzeltme, 100_000), _tamsayi(ekleme, 100_000), _tamsayi(uyari, 100_000),
-             _tamsayi(sure_ms, 86_400_000), belge))
+             _tamsayi(sure_ms, 86_400_000), belge, _tamsayi(resim, 100_000)))
         return True
     except Exception:
         _son_hata = time.monotonic()

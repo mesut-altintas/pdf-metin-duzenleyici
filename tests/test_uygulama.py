@@ -175,3 +175,24 @@ def test_boyut_sinirlari_vercelin_olculen_sinirinin_altinda():
     assert rotalar.AZAMI_DOSYA + 50_000 <= rotalar.AZAMI_ISTEK
     assert rotalar.AZAMI_YANIT < rotalar.VERCEL_OLCULEN_SINIR
     assert rotalar.mb(rotalar.AZAMI_DOSYA) == '4,4'
+
+
+def test_uret_resim_ekler_form_alanlarindan(istemci, ornek):
+    """Arayüzün gönderdiği biçim: `resimler` JSON + her resim `resim_<id>` dosya alanında."""
+    import pymupdf as fitz
+    from tests.test_motor import _dort_renk_png, _renkler
+    _giris(istemci)
+    veri = ornek('chrome-fatura.pdf')
+    kutu = {'id': 'r1', 'sayfa': 1, 'x': 0.55, 'y': 0.05, 'w': 0.3, 'h': 0.15}
+    r = istemci.post('/api/uret', headers=_xhr(istemci), data={
+        'pdf': (io.BytesIO(veri), 'f.pdf'), 'duzeltmeler': '[]',
+        'resimler': json.dumps([kutu]), 'resim_r1': (io.BytesIO(_dort_renk_png()), 'r1.png')})
+    assert r.status_code == 200, r.get_data(as_text=True)[:300]
+    assert len(fitz.open(stream=r.data)[0].get_images()) > len(fitz.open(stream=veri)[0].get_images())
+    assert _renkler(r.data, (0.55, 0.05, 0.3, 0.15)) == 'KYMS'
+    # Dosyası gelmeyen resim ve bozuk kimlik reddedilir.
+    for alanlar in ({'resimler': json.dumps([kutu])},
+                    {'resimler': json.dumps([dict(kutu, id='../x')]), 'resim_../x': (io.BytesIO(b'x'), 'x.png')}):
+        r = istemci.post('/api/uret', headers=_xhr(istemci), data={
+            'pdf': (io.BytesIO(veri), 'f.pdf'), 'duzeltmeler': '[]', **alanlar})
+        assert r.status_code == 400

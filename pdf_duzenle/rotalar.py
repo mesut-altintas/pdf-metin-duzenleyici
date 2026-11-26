@@ -3,6 +3,7 @@ import base64
 import io
 import json
 import logging
+import re
 import time
 from pathlib import PurePath
 
@@ -115,10 +116,11 @@ def analiz():
 def uret():
     bas = time.monotonic()
     veri = None
-    duzeltmeler = eklemeler = paragraflar = None
+    duzeltmeler = eklemeler = paragraflar = resimler = None
 
     def olc(**ek):
-        _olcum('uretildi', bas, veri, duzeltme=_toplam(duzeltmeler, paragraflar), ekleme=_say(eklemeler), **ek)
+        _olcum('uretildi', bas, veri, duzeltme=_toplam(duzeltmeler, paragraflar), ekleme=_say(eklemeler),
+               resim=_say(resimler), **ek)
 
     try:
         ad, veri = _pdf_oku()
@@ -126,6 +128,7 @@ def uret():
             duzeltmeler = json.loads(request.form.get('duzeltmeler') or '[]')
             eklemeler = json.loads(request.form.get('eklemeler') or '[]')
             paragraflar = json.loads(request.form.get('paragraflar') or '[]')
+            resimler = _resimleri_oku()
         except ValueError:
             raise motor.PdfHatasi('Değişiklik listesi okunamadı.', kod='liste')
     except motor.PdfHatasi as e:
@@ -145,7 +148,7 @@ def uret():
         return _kota_dolu(kd)
 
     try:
-        sonuc, uyarilar = motor.uygula(veri, duzeltmeler, eklemeler, paragraflar)
+        sonuc, uyarilar = motor.uygula(veri, duzeltmeler, eklemeler, paragraflar, resimler)
     except motor.PdfHatasi as e:
         olc(basarili=False, hata=e.kod)
         return _hata(str(e))
@@ -182,6 +185,26 @@ def uret():
     if kullanilan is not None:
         yanit.headers['X-Kota'] = f'{kullanilan}/{kd.sinir}'
     return yanit
+
+
+def _resimleri_oku():
+    """Eklenen resimler: form alanı `resimler` = [{id, sayfa, x, y, w, h}] (JSON), her resmin
+    baytları `resim_<id>` dosya alanında. Resim de PDF gibi yalnız istek belleğinde işlenir."""
+    meta = json.loads(request.form.get('resimler') or '[]')
+    hata = motor.PdfHatasi('Eklenecek resim listesi okunamadı.', kod='liste')
+    if not isinstance(meta, list):
+        raise hata
+    sonuc = []
+    for m in meta:
+        if not isinstance(m, dict) or not isinstance(m.get('id'), str) or not re.fullmatch(r'r\d{1,6}', m['id']):
+            raise hata
+        f = request.files.get(f'resim_{m["id"]}')
+        if f is None:
+            raise motor.PdfHatasi('Eklenecek resim gelmedi. Sayfayı yenileyip yeniden deneyin.', kod='liste')
+        r = {k: m.get(k) for k in ('sayfa', 'x', 'y', 'w', 'h')}
+        r['veri'] = f.read(motor.AZAMI_RESIM_BAYT + 1)
+        sonuc.append(r)
+    return sonuc
 
 
 def _say(liste):

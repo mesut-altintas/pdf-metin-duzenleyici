@@ -31,6 +31,9 @@ import pymupdf as fitz
 AZAMI_SAYFA = 40
 AZAMI_DUZELTME = 500
 AZAMI_EKLEME = 200
+AZAMI_RESIM = 20
+AZAMI_RESIM_BAYT = 3_000_000
+AZAMI_RESIM_PIKSEL = 4096       # en uzun kenar; tarayıcı 1600'e küçültüyor
 AZAMI_PARAGRAF = 100
 PARAGRAF_KUCULTME = (1.0, 0.97, 0.94, 0.91, 0.88, 0.85)   # en çok %15 (kullanıcı kararı)
 STANDART_FONTLAR = ('helv', 'hebo', 'heit', 'hebi', 'tiro', 'tibo', 'tiit', 'tibi',
@@ -1204,10 +1207,11 @@ def _sayfaya_uygula(belge, pno, parcalar, planlar, uyarilar, paragraf_planlari=(
                             'okunamıyor; önizlemede denetleyin.')
 
 
-def uygula(veri, duzeltmeler, eklemeler=None, paragraflar=None):
+def uygula(veri, duzeltmeler, eklemeler=None, paragraflar=None, resimler=None):
     pars = _dogrula_paragraf(paragraflar)
     ekler = _dogrula_ekleme(eklemeler)
-    liste = _dogrula(duzeltmeler, bos_olabilir=bool(ekler or pars))
+    res = _dogrula_resim(resimler)
+    liste = _dogrula(duzeltmeler, bos_olabilir=bool(ekler or pars or res))
     doc = _ac(veri)
     # Sahip şifreli dosya şifresiz açılınca is_encrypted False dönüyor (ölçüldü);
     # izin bitleri yine doğru. Şifresiz dosyada bütün bitler açık (-1).
@@ -1273,6 +1277,16 @@ def uygula(veri, duzeltmeler, eklemeler=None, paragraflar=None):
         ek_sayfalara.setdefault(e['sayfa'] - 1, []).append(e)
     for pno in sorted(ek_sayfalara):
         _sayfaya_ekle(belge, pno, ek_sayfalara[pno], uyarilar)
+
+    # Resimler en son: her şeyin üstünde dururlar (kullanıcı onları metnin üstüne koyabilir).
+    res_sayfalara = {}
+    for r in res:
+        if r['sayfa'] > sayfa_sayisi:
+            raise PdfHatasi('Eklenecek resim bu dosyada olmayan bir sayfada. PDF\'i yeniden açın.',
+                            kod='eslesmedi')
+        res_sayfalara.setdefault(r['sayfa'] - 1, []).append(r)
+    for pno in sorted(res_sayfalara):
+        _sayfaya_resim_koy(doc, pno, res_sayfalara[pno], uyarilar)
 
     if doc.page_count != sayfa_sayisi:
         raise PdfHatasi('Beklenmeyen bir hata oldu (sayfa sayısı değişti); PDF oluşturulmadı.')
@@ -1424,6 +1438,79 @@ def _sayfaya_ekle(belge, pno, eklemeler, uyarilar):
         if satir.replace(' ', '') not in sayfa_metni:
             uyarilar.append(f'Sayfa {no}: eklenen “{_kisalt(satir)}” yazıldı ama metin olarak '
                             'okunamıyor; önizlemede denetleyin.')
+
+
+# ---------------------------------------------------------------- resim ekleme (1.17)
+# Döndürme, beyaz zemini kaldırma ve saydamlık tarayıcıda resmin kendisine işlenir;
+# buraya son hâli gelir ve verilen kutuya tam oturtulur (oran tarayıcıda korunur ya da
+# kullanıcı bilerek değiştirir). Ölçüm (26.11.2026, docs/motor.md): döndürülmüş sayfada
+# kutu derotation_matrix ile içerik düzlemine, `rotate=page.rotation` ile resim ekranda dik.
+
+_RESIM_IMZALARI = (b'\x89PNG\r\n\x1a\n', b'\xff\xd8\xff')
+
+
+def _dogrula_resim(resimler):
+    """[{sayfa, x, y, w, h, veri: bytes}] — x, y, w, h sayfa görüntüsünde oran (sol üst köşe)."""
+    if resimler is None:
+        return []
+    hata = PdfHatasi('Eklenecek resim listesi okunamadı.', kod='liste')
+    if not isinstance(resimler, list):
+        raise hata
+    if len(resimler) > AZAMI_RESIM:
+        raise PdfHatasi(f'Bir seferde en fazla {AZAMI_RESIM} resim eklenebilir.', kod='liste')
+    sonuc = []
+    for r in resimler:
+        if not isinstance(r, dict):
+            raise hata
+        sayfa = r.get('sayfa')
+        if not isinstance(sayfa, int) or isinstance(sayfa, bool) or sayfa < 1:
+            raise hata
+        x, y, w, h = (r.get(k) for k in ('x', 'y', 'w', 'h'))
+        if not all(_sayi_mi(v) for v in (x, y, w, h)):
+            raise hata
+        if not (0 <= x <= 1 and 0 <= y <= 1 and 0.002 <= w <= 1 and 0.002 <= h <= 1
+                and x + w <= 1.0001 and y + h <= 1.0001):
+            raise hata
+        veri = r.get('veri')
+        if not isinstance(veri, (bytes, bytearray)) or not veri.startswith(_RESIM_IMZALARI):
+            raise PdfHatasi('Eklenecek resim PNG ya da JPEG olmalı.', kod='resim')
+        if len(veri) > AZAMI_RESIM_BAYT:
+            raise PdfHatasi('Eklenecek resim çok büyük.', kod='resim')
+        try:
+            pix = fitz.Pixmap(bytes(veri))
+        except Exception:
+            raise PdfHatasi('Eklenecek resim okunamadı.', kod='resim')
+        if max(pix.width, pix.height) > AZAMI_RESIM_PIKSEL or min(pix.width, pix.height) < 1:
+            raise PdfHatasi('Eklenecek resmin boyutu desteklenmiyor.', kod='resim')
+        sonuc.append({'sayfa': sayfa, 'x': x, 'y': y, 'w': w, 'h': h, 'veri': bytes(veri)})
+    return sonuc
+
+
+def _sayfaya_resim_koy(doc, pno, resimler, uyarilar):
+    no = pno + 1
+    page = doc[pno]
+    once = _parcalar(page, pno)
+    korunan = [(p, h) for p in once for h in p.harfler if not h.sentetik and not h.c.isspace()]
+    if not page.is_wrapped:
+        page.wrap_contents()
+    ters = page.derotation_matrix
+    pr = page.rect
+    for r in resimler:
+        ekran = fitz.Rect(pr.x0 + r['x'] * pr.width, pr.y0 + r['y'] * pr.height,
+                          pr.x0 + (r['x'] + r['w']) * pr.width, pr.y0 + (r['y'] + r['h']) * pr.height)
+        kutu = ekran * ters
+        kutu.normalize()
+        for p, h in korunan:
+            if h.k.intersects(kutu):
+                uyarilar.append(f'Sayfa {no}: eklenen resim “{_kisalt(p.metin, 25)}” metninin üstüne biniyor.')
+                break
+        page.insert_image(kutu, stream=r['veri'], keep_proportion=False, rotate=page.rotation)
+    page = doc.reload_page(page)
+    dizin = _harf_dizini(_parcalar(page, pno))
+    for p, h in korunan:
+        if not _var_mi(dizin, h):
+            raise PdfHatasi(f'Sayfa {no}: “{_kisalt(p.metin)}” metni resim eklemeden etkilendi. '
+                            'Diğer metinlere dokunmamak için PDF oluşturulmadı.', kod='denetim')
 
 
 # ---------------------------------------------------------------- paragraf düzenleme

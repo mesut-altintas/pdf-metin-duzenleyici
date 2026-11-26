@@ -710,3 +710,76 @@ def test_duzenlenen_paragraf_yeniden_paragraf_olarak_tanınır(ornek, pid, degis
     yeni = degis(p['t'])
     sonuc, _ = _par_duzelt(veri, pid, yeni)
     assert yeni in [v['t'] for v in _paragraflar_(sonuc).values()]
+
+
+# ---------------------------------------------------------------- resim ekleme (1.17)
+
+def _dort_renk_png():
+    """Sol üst kırmızı, sağ üst yeşil, sol alt mavi, sağ alt sarı (40×20)."""
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 40, 20), False)
+    for yy in range(20):
+        for xx in range(40):
+            pix.set_pixel(xx, yy, [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)][(yy >= 10) * 2 + (xx >= 20)])
+    return pix.tobytes('png')
+
+
+def _renkler(veri, kutu, pno=0):
+    """Kutunun (ekran oranı x, y, w, h) dört çeyreğindeki renk adları: K Y M S."""
+    page = fitz.open(stream=veri)[pno]
+    g = page.get_pixmap(dpi=72)
+    x, y, w, h = kutu
+    adlar = {(255, 0, 0): 'K', (0, 255, 0): 'Y', (0, 0, 255): 'M', (255, 255, 0): 'S'}
+    return ''.join(adlar.get(tuple(g.pixel(int((x + w * a) * g.width), int((y + h * b) * g.height))[:3]), '?')
+                   for b in (0.25, 0.75) for a in (0.25, 0.75))
+
+
+def _resim(sayfa=1, kutu=(0.1, 0.2, 0.4, 0.2), veri=None):
+    x, y, w, h = kutu
+    return {'sayfa': sayfa, 'x': x, 'y': y, 'w': w, 'h': h, 'veri': veri or _dort_renk_png()}
+
+
+@pytest.mark.parametrize('donus', [0, 90, 180, 270])
+def test_resim_kutuya_ekranda_dik_oturur(donus):
+    def ciz(doc, page):
+        # Hiçbir dönüşte kutunun altında kalmayan yer (kesişirse uyarı doğru olarak çıkar).
+        page.insert_text((160, 480), 'Dokunulmayan satır', fontsize=12)
+        page.set_rotation(donus)
+    veri = _pdf(ciz, width=300, height=500)
+    once = _harfler(veri)
+    sonuc, uyarilar = motor.uygula(veri, [], resimler=[_resim()])
+    assert _renkler(sonuc, (0.1, 0.2, 0.4, 0.2)) == 'KYMS'
+    assert _harfler(sonuc) == once and uyarilar == []
+
+
+def test_resim_metnin_ustune_binerse_uyarir_metin_yerinde_kalir():
+    veri = _pdf(lambda d, p: p.insert_text((50, 100), 'Altta kalan satır', fontsize=12), width=300, height=500)
+    once = _harfler(veri)
+    sonuc, uyarilar = motor.uygula(veri, [], resimler=[_resim(kutu=(0.1, 0.15, 0.5, 0.1))])
+    assert _harfler(sonuc) == once
+    assert any('resim' in u and 'Altta kalan' in u for u in uyarilar)
+
+
+def test_resim_dogrulamasi():
+    veri = _pdf(lambda d, p: p.insert_text((50, 100), 'x', fontsize=12))
+    for bozuk, kod in (({'veri': b'GIF89a....'}, 'resim'), ({'veri': b'\x89PNG\r\n\x1a\nbozuk'}, 'resim'),
+                       ({'x': 0.8, 'w': 0.4}, 'liste'), ({'w': 0}, 'liste'), ({'sayfa': 0}, 'liste'),
+                       ({'x': float('nan')}, 'liste')):
+        r = dict(_resim(), **bozuk)
+        with pytest.raises(motor.PdfHatasi) as e:
+            motor.uygula(veri, [], resimler=[r])
+        assert e.value.kod == kod, bozuk
+    with pytest.raises(motor.PdfHatasi) as e:
+        motor.uygula(veri, [], resimler=[_resim()] * (motor.AZAMI_RESIM + 1))
+    assert e.value.kod == 'liste'
+    with pytest.raises(motor.PdfHatasi) as e:
+        motor.uygula(veri, [], resimler=[_resim(sayfa=2)])
+    assert e.value.kod == 'eslesmedi'
+
+
+def test_saydam_png_saydam_kalir():
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 10, 10), True)
+    pix.set_rect(pix.irect, (0, 0, 0, 0))      # tamamen saydam (clear_with alfayı 255 bırakıyor)
+    veri = _pdf(lambda d, p: p.draw_rect(fitz.Rect(0, 0, 300, 500), color=None, fill=(0, 0, 1)), width=300, height=500)
+    sonuc, _ = motor.uygula(veri, [], resimler=[_resim(veri=pix.tobytes('png'))])
+    g = fitz.open(stream=sonuc)[0].get_pixmap(dpi=72)
+    assert tuple(g.pixel(int(0.3 * g.width), int(0.3 * g.height))[:3]) == (0, 0, 255)   # zemin görünür

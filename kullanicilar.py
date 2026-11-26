@@ -70,6 +70,8 @@ _SEMA = [
     "CREATE INDEX IF NOT EXISTS kullanim_olayi_zaman ON kullanim_olayi (zaman)",
     # 1.6: eklenen metin sayısı (var olan satırlara dokunmaz).
     "ALTER TABLE kullanim_olayi ADD COLUMN IF NOT EXISTS ekleme INTEGER",
+    # 1.17: eklenen resim sayısı.
+    "ALTER TABLE kullanim_olayi ADD COLUMN IF NOT EXISTS resim INTEGER",
     # 1.9: hesap (ödeyen birim) ve aylık belge kotası (planlar.py, kota.py).
     # Hesap kullanıcıdan ayrı: ekip planında birden çok kullanıcı aynı hesaba bağlanır.
     """CREATE TABLE IF NOT EXISTS hesap (
