@@ -90,7 +90,7 @@ def test_dosya_adi_ve_hata_metni_kaydedilmez(app, ornek):
         kolonlar = {r[0] for r in cur.fetchall()}
     conn.close()
     assert kolonlar == {'id', 'zaman', 'kullanici', 'tur', 'basarili', 'hata', 'sayfa', 'boyut',
-                        'duzeltme', 'ekleme', 'uyari', 'sure_ms', 'belge'}
+                        'duzeltme', 'ekleme', 'uyari', 'sure_ms', 'belge', 'resim'}   # resim: sayı (1.17)
 
 
 def test_istemci_olaylari_ve_dogrulama(app):

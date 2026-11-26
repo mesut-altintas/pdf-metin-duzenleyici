@@ -11,7 +11,7 @@ tarayıcıdan indirilir.
 
 Canlı: https://pdf.altintas.biz · Flask + [PyMuPDF](https://github.com/pymupdf/PyMuPDF) · Arayüz Türkçe.
 
-Özellikler: metni yerinde değiştirme, toplu bul ve değiştir, yeni metin ekleme,
+Özellikler: metni yerinde değiştirme, toplu bul ve değiştir, yeni metin ve resim ekleme,
 paragraf düzenleme, değişiklik listesini kaydet / yükle, telefonda kullanım (PWA),
 kullanıcı yönetimi, aylık belge kotası, e-postayla kayıt ve şifre yenileme.
 
@@ -81,6 +81,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.17 | 26.11.2026 | Resim ekleme: PNG / JPEG; sürükleyerek taşıma, köşeden oranlı ve kenardan serbest boyutlandırma, 90° döndürme, beyaz zemini kaldırma, saydamlık, resmi değiştirme; değişiklik listesine girer |
 | 1.16 | 24.11.2026 | Kullanım koşulları: tüketici olmayanlarla uyuşmazlıkta İstanbul mahkemeleri ve icra daireleri |
 | 1.15 | 24.11.2026 | Kayıt ve şifremi unuttum formlarında "Ben robot değilim" (reCAPTCHA v2); aydınlatma metnine Google aktarımı |
 | 1.14 | 24.11.2026 | Alt bilgi sadeleşti: kaynak bağlantısı yeni "Hakkında" sayfasına taşındı |

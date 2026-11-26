@@ -32,6 +32,22 @@ tipinden biri. Satır aralığı 1,2 × boyut. Hiçbir şey silinmez; yine de so
 var olan bütün harflerin yerinde durduğu denetlenir (bozmayla sınanamıyor:
 ekleme silme yapmadığı için yalnız bir hata durumunda tetiklenir).
 
+## Resim ekleme (1.17)
+
+`uygula(..., resimler)`: `[{sayfa, x, y, w, h, veri}]`; kutu sayfa görüntüsünde oran (sol üst).
+PNG ya da JPEG, en çok 20 resim, her biri 3 MB ve en uzun kenarı 4096 piksel. Resimler en son
+eklenir, her şeyin üstünde durur; kutuya tam oturtulur (`keep_proportion=False` — oran tarayıcıda
+korunur ya da kullanıcı kenar tutamacıyla bilerek değiştirir). Döndürme (90°), beyaz zemini
+kaldırma ve saydamlık tarayıcıda resmin kendisine işlenir (`public/static/resim.js`, `editor.js`
+"pişirme"); sunucu yalnız son resmi yerleştirir. Metnin üstüne binen resim uyarı verir; sonunda
+dokunulmayan bütün harflerin yerinde durduğu yine denetlenir.
+
+**Ölçüm (26.11.2026, PyMuPDF 1.28.2):** döndürülmüş sayfada (0 / 90 / 180 / 270) kutu
+`derotation_matrix` ile içerik düzlemine çevrilip `normalize()` edilir; resim **yalnız
+`rotate=page.rotation` ile** ekranda dik ve doğru yerde durur (dört renkli deneme resmiyle, dört
+dönüşte dört çeyrek; `test_resim_kutuya_ekranda_dik_oturur`). `Pixmap.clear_with(0)` alfayı 255
+bırakıyor — saydam deneme resmi `set_rect(..., (0, 0, 0, 0))` ile yapılır.
+
 ## Paragraf düzenleme (1.7)
 
 `uygula(..., paragraflar=[{id: 'P<sayfa>-<blok>', eski, yeni, hiza}])`.
