@@ -61,6 +61,23 @@ Automation" anahtarı açar — açılırsa ölçümden sonra iptal edilir
 - pdf2docx yüklenirken kök kaydediciye `basicConfig(level=INFO)` uyguluyor; yükleme
   anında köke geçici boş işleyici konur, uygulamanın log düzeyi değişmez.
 
+### Chrome / web sayfası PDF'leri (1.19)
+
+Ölçüm, 26.11.2026, Chrome'dan yazdırılmış 22 sayfalık bir web sayfası:
+
+- Sözcük arası boşluk ayrı bir parçada (Skia boşluğu ayrı bir Type3 yazı tipinden çiziyor);
+  pdf2docx yalnız boşluk olan parçayı atıyordu → "sözcüklerbirbirineyapışık". Bir metin parçasının
+  ardındaki boşluk parçası artık korunur (`Spans.restore` yaması).
+- Yazı tipleri Type3: MuPDF adı "Type3 (9 0 R)", kalın / eğik bayrağı boş. Aile, kalınlık
+  (`FontWeight` ≥ 600) ve eğim `FontDescriptor`'dan okunur (`RawPageFitz._preprocess_text`
+  yaması). Bu belgede 151 Type3 yazı tipi: IBM Plex Sans 400 / 700, Archivo SemiBold.
+- Word'e yazılan ad: yaygın yazı tipiyse kendisi ("Calibri-Bold", "TimesNewRomanPSMT"
+  tanınır), değilse türüne göre Arial / Times New Roman / Courier New (web yazı tipleri
+  çoğu bilgisayarda yok, Word rastgele bir yazı tipine düşüyordu).
+- Kalan sınır: kartlar, rozetler ve akış şeması gibi çizimler Word'de ayrı resim ve
+  tablo olarak geliyor; metinle hizaları kayabiliyor. pdf2docx'in yapısı gereği; web
+  sayfası düzeni Word'ün akan metin düzenine birebir oturmuyor.
+
 ## Excel
 
 - Tablo: en az 2 satır ve 2 sütun (çerçeveli tek hücreli metin kutusu tablo sayılmaz).
