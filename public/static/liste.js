@@ -20,9 +20,12 @@
   const HIZALAR = ['sol', 'sag', 'orta'];
   const FONTLAR = ['otomatik', 'benzer'];
   const AZAMI_EKLEME = 200;       // motor.AZAMI_EKLEME ile aynı
+  const AZAMI_RESIM = 20;         // motor.AZAMI_RESIM ile aynı
+  const AZAMI_KAYNAK = 4_200_000; // resmin base64 metni (~3 MB; motor.AZAMI_RESIM_BAYT)
+  const KAYNAK_DESENI = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
 
   function olustur({ dosyaAdi, parmakIzi, sayfaSayisi, uygulamaSurumu, parcalar, degisiklik, eklemeler,
-    paragraflar, paragrafDegisiklik, zaman }) {
+    paragraflar, paragrafDegisiklik, resimler, zaman }) {
     const liste = [];
     degisiklik.forEach((d, id) => {
       const p = parcalar.get(id);
@@ -52,7 +55,21 @@
       degisiklikler: liste,
       eklemeler: ekler,
       paragraflar: pars,
+      // 1.17: eklenen resimler; asıl (küçültülmüş) resim ve ayarlar, yeniden düzenlenebilsin diye.
+      resimler: Array.from((resimler || new Map()).values()).map((r) => ({
+        sayfa: r.sayfa, x: r.x, y: r.y, w: r.w, h: r.h, donus: r.donus, saydamlik: r.saydamlik,
+        beyaz: !!r.beyaz, kaynak: r.kaynak,
+      })),
     };
+  }
+
+  function resimGecerli(r) {
+    return r && typeof r === 'object' && Number.isInteger(r.sayfa) && r.sayfa >= 1
+      && [r.x, r.y, r.w, r.h].every(sayiMi) && r.x >= 0 && r.y >= 0 && r.w >= 0.002 && r.h >= 0.002
+      && r.x + r.w <= 1.0001 && r.y + r.h <= 1.0001
+      && [0, 90, 180, 270].includes(r.donus) && sayiMi(r.saydamlik) && r.saydamlik >= 0.1 && r.saydamlik <= 1
+      && typeof r.beyaz === 'boolean'
+      && typeof r.kaynak === 'string' && r.kaynak.length <= AZAMI_KAYNAK && KAYNAK_DESENI.test(r.kaynak);
   }
 
   function eklemeGecerli(e) {
@@ -84,7 +101,14 @@
     }
     const hamPar = veri.paragraflar === undefined ? [] : veri.paragraflar;   // 1.7'den önceki listelerde yok
     if (!Array.isArray(hamPar)) return { hata: 'Liste bozuk: paragraflar okunamadı.' };
-    if (ham.length === 0 && hamEk.length === 0 && hamPar.length === 0) return { hata: 'Listede değişiklik yok.' };
+    const hamRes = veri.resimler === undefined ? [] : veri.resimler;          // 1.17'den önceki listelerde yok
+    if (!Array.isArray(hamRes)) return { hata: 'Liste bozuk: eklenen resimler okunamadı.' };
+    if (hamRes.length > AZAMI_RESIM) {
+      return { hata: `Listede ${hamRes.length} resim var; en fazla ${AZAMI_RESIM} yüklenebilir.` };
+    }
+    if (ham.length === 0 && hamEk.length === 0 && hamPar.length === 0 && hamRes.length === 0) {
+      return { hata: 'Listede değişiklik yok.' };
+    }
     if (ham.length > AZAMI_DEGISIKLIK) {
       return { hata: `Listede ${ham.length} değişiklik var; en fazla ${AZAMI_DEGISIKLIK} yüklenebilir.` };
     }
@@ -129,11 +153,19 @@
       }
       paragraflar.push({ sayfa: d.sayfa, eski: d.eski, yeni: d.yeni, hiza: d.hiza });
     }
+    const resimler = [];
+    for (let i = 0; i < hamRes.length; i += 1) {
+      const r = hamRes[i];
+      if (!resimGecerli(r)) return { hata: `Liste bozuk: ${i + 1}. resim okunamadı.` };
+      resimler.push({ sayfa: r.sayfa, x: r.x, y: r.y, w: r.w, h: r.h, donus: r.donus, saydamlik: r.saydamlik,
+        beyaz: r.beyaz, kaynak: r.kaynak });
+    }
     const dosya = veri.dosya && typeof veri.dosya === 'object' ? veri.dosya : {};
     return {
       liste,
       eklemeler,
       paragraflar,
+      resimler,
       dosya: {
         ad: typeof dosya.ad === 'string' ? dosya.ad : '',
         parmak_izi: typeof dosya.parmak_izi === 'string' ? dosya.parmak_izi : '',

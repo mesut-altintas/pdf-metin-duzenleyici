@@ -68,6 +68,9 @@
       <label class="kutu kucuk-not"><input type="checkbox" id="cizgileri-goster"> Metinleri çerçevele</label>
       <button type="button" class="dugme ikincil kucuk" id="ekle-modu" aria-pressed="false">＋ Metin ekle</button>
       <span class="kucuk-not ekle-ipucu" id="ekle-ipucu" hidden>Yazının başlayacağı yere tıklayın.</span>
+      <button type="button" class="dugme ikincil kucuk" id="resim-ekle" aria-pressed="false">＋ Resim ekle</button>
+      <input type="file" id="resim-dosya" accept="image/png,image/jpeg" hidden>
+      <span class="kucuk-not ekle-ipucu" id="resim-ipucu" hidden>Resmin konacağı yere tıklayın.</span>
     </div>
     <div class="sayfalar" id="sayfalar"></div>
   </div>
@@ -110,6 +113,8 @@
         <ul id="degisiklikler" class="liste"></ul>
         <h3 class="kucuk-baslik" id="ekleme-baslik" hidden>Eklenen metinler</h3>
         <ul id="eklemeler" class="liste"></ul>
+        <h3 class="kucuk-baslik" id="resim-baslik" hidden>Eklenen resimler</h3>
+        <ul id="resim-listesi" class="liste"></ul>
         <div class="liste-dugmeleri">
           <button type="button" class="dugme ikincil kucuk" id="liste-kaydet" disabled
                   title="Değişiklikleri küçük bir dosya olarak indirir; aynı şablona yeniden yüklenebilir">Listeyi kaydet</button>
@@ -230,6 +235,33 @@
   </form>
 </dialog>
 
+<dialog id="resim-pencere" class="pencere">
+  <form id="resim-form">
+    <h2>Resim</h2>
+    <p class="kucuk-not" id="resim-bilgi"></p>
+    <div class="resim-onizleme"><img id="resim-onizleme" alt="Eklenen resmin önizlemesi"></div>
+    <div class="resim-secenekler">
+      <div class="dugme-grubu">
+        <button type="button" class="dugme ikincil kucuk" id="resim-sola">↺ Sola döndür</button>
+        <button type="button" class="dugme ikincil kucuk" id="resim-saga">↻ Sağa döndür</button>
+      </div>
+      <label class="alan">
+        <span class="etiket">Saydamlık: <span id="resim-saydamlik-deger">%0</span></span>
+        <input id="resim-saydamlik" type="range" min="0" max="90" step="5">
+      </label>
+      <label class="kutu"><input type="checkbox" id="resim-beyaz"> Beyaz arka planı kaldır <span class="kucuk-not">(kâğıda atılmış imza, kaşe)</span></label>
+    </div>
+    <p class="kucuk-not">Resmi sürükleyerek taşıyın. Köşedeki tutamaçlar oranı koruyarak, kenardakiler yalnız eni ya da boyu değiştirir.</p>
+    <p class="durum hata" id="resim-hata" hidden></p>
+    <div class="pencere-eylem">
+      <button type="button" class="dugme ikincil" id="resim-kaldir">Kaldır</button>
+      <button type="button" class="dugme ikincil" id="resim-degistir">Resmi değiştir</button>
+      <span class="bosluk"></span>
+      <button type="submit" class="dugme birincil">Tamam</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="onizleme" class="pencere genis">
   <div class="onizleme-ust">
     <h2>Önizleme</h2>
@@ -244,5 +276,6 @@
 {% block betik %}
 <script src="{{ url_for('static', filename='liste.js') }}"></script>
 <script src="{{ url_for('static', filename='bul.js') }}"></script>
+<script src="{{ url_for('static', filename='resim.js') }}"></script>
 <script src="{{ url_for('static', filename='editor.js') }}"></script>
 {% endblock %}

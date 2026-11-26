@@ -154,3 +154,27 @@ test('paragraflar: kaydedilir, doğrulanır, metinle eşleşir; eski listeler yi
   const c = JSON.parse(JSON.stringify(k)); c.paragraflar[0].hiza = 'yukari';
   assert.match(L.dogrula(c).hata, /1\. paragraf/);
 });
+
+test('eklenen resimler listeye girer ve geri okunur; eski liste resimsiz okunur', () => {
+  const kaynak = 'data:image/png;base64,iVBORw0KGgo=';
+  const resimler = new Map([['r1', { sayfa: 2, x: 0.1, y: 0.2, w: 0.3, h: 0.1, donus: 90, saydamlik: 0.5, beyaz: true, kaynak }]]);
+  const veri = JSON.parse(JSON.stringify(L.olustur({
+    dosyaAdi: 'a.pdf', parmakIzi: 'x', sayfaSayisi: 2, uygulamaSurumu: '1.17', parcalar: new Map(),
+    degisiklik: new Map(), eklemeler: new Map(), resimler, zaman: 't',
+  })));
+  const s = L.dogrula(veri);
+  assert.equal(s.hata, undefined);
+  assert.deepEqual(s.resimler, [{ sayfa: 2, x: 0.1, y: 0.2, w: 0.3, h: 0.1, donus: 90, saydamlik: 0.5, beyaz: true, kaynak }]);
+  const eski = Object.assign({}, veri, { resimler: undefined, eklemeler: [{ sayfa: 1, x: 0.1, y: 0.1, metin: 'a', boyut: 10, renk: '#000000', font: { tur: 'standart', ad: 'helv' } }] });
+  assert.deepEqual(L.dogrula(eski).resimler, []);
+});
+
+test('bozuk resim satırı reddedilir', () => {
+  const temel = { sayfa: 1, x: 0.1, y: 0.1, w: 0.2, h: 0.2, donus: 0, saydamlik: 1, beyaz: false, kaynak: 'data:image/jpeg;base64,/9j/' };
+  const liste = (r) => ({ tur: 'pdf-metin-duzenleyici/degisiklikler', bicim: 1, degisiklikler: [], resimler: [r] });
+  assert.equal(L.dogrula(liste(temel)).hata, undefined);
+  for (const bozuk of [{ kaynak: 'javascript:alert(1)' }, { kaynak: 'data:image/svg+xml;base64,PHN2Zz4=' },
+    { donus: 45 }, { saydamlik: 0 }, { x: 0.9, w: 0.2 }, { beyaz: 'evet' }, { sayfa: 0 }]) {
+    assert.match(L.dogrula(liste(Object.assign({}, temel, bozuk))).hata || '', /resim/, JSON.stringify(bozuk));
+  }
+});

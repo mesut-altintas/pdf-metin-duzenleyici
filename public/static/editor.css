@@ -476,3 +476,39 @@ a.dugme { display: inline-block; text-decoration: none; }
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
 }
+
+/* ---------- Resim ekleme (1.17) ---------- */
+.sayfalar.resim-modu .sayfa-ic { cursor: crosshair; }
+.sayfalar.resim-modu .parca, .sayfalar.resim-modu .ekleme, .sayfalar.resim-modu .paragraf-isaret { pointer-events: none; }
+.resim-ek {
+  position: absolute; z-index: 3; cursor: move; touch-action: none;
+  outline: 1px dashed transparent; outline-offset: 0;
+}
+.resim-ek img { display: block; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.resim-ek:hover, .resim-ek.secili, .resim-ek:focus-visible { outline-color: var(--vurgu); }
+.resim-ek.parla { animation: parla 1.2s ease-out 1; }
+.resim-ek .tutamac {
+  position: absolute; width: 12px; height: 12px; margin: -7px 0 0 -7px; display: none; touch-action: none;
+  background: #fff; border: 2px solid var(--vurgu); border-radius: 3px; box-sizing: border-box;
+}
+.resim-ek.secili .tutamac, .resim-ek:hover .tutamac { display: block; }
+.resim-ek .t-sol-ust { left: 0; top: 0; cursor: nwse-resize; }
+.resim-ek .t-sag-ust { left: 100%; top: 0; cursor: nesw-resize; }
+.resim-ek .t-sol-alt { left: 0; top: 100%; cursor: nesw-resize; }
+.resim-ek .t-sag-alt { left: 100%; top: 100%; cursor: nwse-resize; }
+.resim-ek .t-ust { left: 50%; top: 0; cursor: ns-resize; border-radius: 6px; }
+.resim-ek .t-alt { left: 50%; top: 100%; cursor: ns-resize; border-radius: 6px; }
+.resim-ek .t-sol { left: 0; top: 50%; cursor: ew-resize; border-radius: 6px; }
+.resim-ek .t-sag { left: 100%; top: 50%; cursor: ew-resize; border-radius: 6px; }
+@media (pointer: coarse) {
+  .resim-ek .tutamac { width: 22px; height: 22px; margin: -12px 0 0 -12px; }
+  .resim-ek:hover:not(.secili) .tutamac { display: none; }
+}
+.resim-onizleme {
+  display: flex; justify-content: center; padding: 8px; border: 1px solid var(--cizgi); border-radius: 6px;
+  background: repeating-conic-gradient(#e9ecf1 0 25%, #fff 0 50%) 50% / 16px 16px;
+}
+.resim-onizleme img { max-width: 100%; max-height: 220px; }
+.resim-secenekler { margin-top: 12px; }
+.resim-secenekler .dugme-grubu { display: flex; gap: 8px; flex-wrap: wrap; }
+.resim-secenekler input[type=range] { width: 100%; padding: 0; }

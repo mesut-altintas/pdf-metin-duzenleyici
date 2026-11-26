@@ -21,12 +21,15 @@
   let degisiklik = new Map();    // id -> {yeni, hiza, font, sigdir}
   let eklemeler = new Map();     // e1.. -> {sayfa, x, y, metin, boyut, renk, font:{tur, ad, bayrak}}
   let eklemeSayac = 0;
+  let resimler = new Map();      // r1.. -> {sayfa, x, y, w, h, donus, saydamlik, beyaz, kaynak, surum, pisirilmis}
+  let resimSayac = 0;
+  let seciliResim = null;
   const sayfaBilgi = new Map();  // sayfa no -> {pt:[gen, yuk], yazi:[...]}
   let belgeFontlari = [];        // [{ad, bayrak}] bütün sayfalardan, en çok kullanılan önce
   const paragraflar = new Map();        // P.. -> {id, t, satir, hiza, k, parcalar, sayfa}
   const parcaPar = new Map();           // parça id -> paragraf id
   let paragrafDegisiklik = new Map();   // P.. -> {yeni, hiza}
-  const toplamDegisiklik = () => degisiklik.size + eklemeler.size + paragrafDegisiklik.size;
+  const toplamDegisiklik = () => degisiklik.size + eklemeler.size + paragrafDegisiklik.size + resimler.size;
   const parDuzenleniyor = (id) => parcaPar.has(id) && paragrafDegisiklik.has(parcaPar.get(id));
   const HIZA_ADI = { sol: 'sola dayalı', sag: 'sağa dayalı', orta: 'ortalı', iki: 'iki yana yaslı' };
   let son = null;                // {anahtar, blob, ad, uyarilar}
@@ -163,6 +166,9 @@
       const j = await (await istek('/api/analiz', fd)).json();
       dosya = f;
       eklemeler = new Map();
+      resimler = new Map();
+      seciliResim = null;
+      resimModuAyarla(false);
       paragrafDegisiklik = new Map();
       eklemeModuAyarla(false);
       dosyaIzi = await parmakIzi(f);
@@ -291,6 +297,8 @@
 
   $('#sayfalar').addEventListener('click', (e) => {
     if (e.target.closest('.ekleme')) return;          // sürükleme / düzenleme kendi dinleyicisinde
+    if (e.target.closest('.resim-ek')) return;        // resmin kendi dinleyicisi var
+    if (resimModu) { resmiYerlestir(e); return; }
     const isaret = e.target.closest('.paragraf-isaret');
     if (isaret && !eklemeModu) { paragrafPenceresi(isaret.dataset.par); return; }
     if (eklemeModu) {
@@ -450,6 +458,8 @@
 
     eklemeListesiCiz();
     eklemeleriCiz();
+    resimListesiCiz();
+    resimleriCiz();
     const toplam = toplamDegisiklik();
     $('#sayac').textContent = String(toplam);
     $('#sayac-mobil').textContent = String(toplam);
@@ -710,7 +720,8 @@
   }
 
   function anahtarUret() {
-    return JSON.stringify({ d: liste(), e: eklemeListesi(), p: paragrafListesi() });
+    return JSON.stringify({ d: liste(), e: eklemeListesi(), p: paragrafListesi(),
+      r: Array.from(resimler.entries()).map(([id, r]) => [id, r.sayfa, r.x, r.y, r.w, r.h, pisirmeAnahtari(r)]) });
   }
 
   async function olustur() {
@@ -721,6 +732,23 @@
     fd.append('duzeltmeler', JSON.stringify(liste()));
     fd.append('eklemeler', JSON.stringify(eklemeListesi()));
     fd.append('paragraflar', JSON.stringify(paragrafListesi()));
+    // Resimler pişirilip (döndürme, beyaz zemin, saydamlık) ayrı dosya alanlarıyla gider.
+    const meta = [];
+    let toplam = dosya.size;
+    for (const [id, r] of resimler) {
+      const pis = await pisir(r);
+      meta.push({ id, sayfa: r.sayfa, x: r.x, y: r.y, w: r.w, h: r.h });
+      toplam += pis.blob.size;
+    }
+    if (toplam > AZAMI) {
+      throw new Error(`PDF ile eklenen resimler birlikte ${mbYaz(toplam)} MB; sunucuya en çok ${AZAMI_MB} MB gönderilebilir. `
+        + 'Resim sayısını azaltın ya da daha küçük resim kullanın.');
+    }
+    fd.append('resimler', JSON.stringify(meta));
+    for (const [id, r] of resimler) {
+      const b = r.pisirilmis.blob;
+      fd.append(`resim_${id}`, b, `${id}.${b.type === 'image/png' ? 'png' : 'jpg'}`);
+    }
     const yanit = await istek('/api/uret', fd);
     kotaBaslik(yanit.headers.get('X-Kota'));
     const blob = await yanit.blob();
@@ -890,7 +918,7 @@
     if (!toplamDegisiklik()) return;
     const veri = DegisiklikListesi.olustur({
       dosyaAdi: dosya.name, parmakIzi: dosyaIzi, sayfaSayisi, uygulamaSurumu: SURUM,
-      parcalar, degisiklik, eklemeler, paragraflar, paragrafDegisiklik, zaman: new Date().toISOString(),
+      parcalar, degisiklik, eklemeler, paragraflar, paragrafDegisiklik, resimler, zaman: new Date().toISOString(),
     });
     const blob = new Blob([JSON.stringify(veri, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -902,7 +930,8 @@
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     const ekNot = (eklemeler.size ? `, ${eklemeler.size} eklenen metin` : '')
-      + (paragrafDegisiklik.size ? `, ${paragrafDegisiklik.size} paragraf` : '');
+      + (paragrafDegisiklik.size ? `, ${paragrafDegisiklik.size} paragraf` : '')
+      + (resimler.size ? `, ${resimler.size} resim` : '');
     durum($('#liste-durum'), `Liste kaydedildi: ${degisiklik.size} değişiklik${ekNot}. Aynı şablondaki bir PDF'e "Liste yükle" ile uygulayabilirsiniz.`);
     $('#liste-durum').classList.remove('hata');
     olayBildir('liste_kaydedildi', { duzeltme: toplamDegisiklik() });
@@ -918,7 +947,7 @@
     const kutu = $('#liste-durum');
     let sonuc;
     try {
-      if (f.size > 2_000_000) throw new Error('Dosya bir değişiklik listesi için çok büyük.');
+      if (f.size > 30_000_000) throw new Error('Dosya bir değişiklik listesi için çok büyük.');   // resimler base64 içinde
       let veri;
       try { veri = JSON.parse(await f.text()); } catch (_) { throw new Error('Bu dosya bir değişiklik listesi değil.'); }
       sonuc = DegisiklikListesi.dogrula(veri);
@@ -961,6 +990,20 @@
       eklemeler.set(`e${eklemeSayac}`, Object.assign({}, e, { font: Object.assign({}, e.font) }));
       eklenen += 1;
     });
+    let resimSayisi = 0;
+    sonuc.resimler.forEach((r) => {
+      if (r.sayfa > sayfaSayisi) {
+        bulunamayan.push({ sayfa: r.sayfa, eski: '', yeni: 'resim', neden: 'bu dosyada o sayfa yok', ekleme: true });
+        return;
+      }
+      if (resimler.size >= AZAMI_RESIM) {
+        bulunamayan.push({ sayfa: r.sayfa, eski: '', yeni: 'resim', neden: `en çok ${AZAMI_RESIM} resim eklenebilir`, ekleme: true });
+        return;
+      }
+      resimSayac += 1;
+      resimler.set(`r${resimSayac}`, Object.assign({}, r, { surum: 1 }));
+      resimSayisi += 1;
+    });
     degisti();
 
     kutu.hidden = false;
@@ -968,7 +1011,7 @@
     kutu.textContent = '';
     const baslik = document.createElement('strong');
     baslik.textContent = `${uygulanan} değişiklik` + (parSayisi ? `, ${parSayisi} paragraf` : '')
-      + (eklenen ? `, ${eklenen} eklenen metin` : '') + ' yüklendi.';
+      + (eklenen ? `, ${eklenen} eklenen metin` : '') + (resimSayisi ? `, ${resimSayisi} resim` : '') + ' yüklendi.';
     kutu.appendChild(baslik);
     const notlar = [];
     if (sonuc.dosya.parmak_izi && dosyaIzi && sonuc.dosya.parmak_izi !== dosyaIzi) {
@@ -1077,6 +1120,7 @@
   let yeniKonum = null;
 
   function eklemeModuAyarla(acik) {
+    if (acik && resimModu) resimModuAyarla(false);
     eklemeModu = acik;
     $('#sayfalar').classList.toggle('ekleme-modu', acik);
     const d = $('#ekle-modu');
@@ -1305,6 +1349,374 @@
     const el = ev.target.closest('.ekleme');
     if (el && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); eklemePenceresi(el.dataset.ek); }
   });
+
+  // ---------- Resim ekleme (1.17) ----------
+  // Asıl resim tarayıcıda en çok 1600 piksele küçültülür (kaynak). Döndürme, beyaz zemini
+  // kaldırma ve saydamlık PDF'e gidecek resme burada işlenir ("pişirme"); ekranda da aynı
+  // pişmiş resim görünür. Kutu sayfa oranıyla tutulur (resim.js); sunucu resmi kutuya oturtur.
+  const AZAMI_RESIM = 20;                  // motor.AZAMI_RESIM ile aynı
+  const RESIM_EN_BUYUK = 1600;
+  const RESIM_AZAMI_BAYT = 2_800_000;      // motor.AZAMI_RESIM_BAYT (3 MB) altında
+  let resimModu = false;
+  let bekleyenKaynak = null;               // yerleştirilmeyi bekleyen yeni resim
+  let degistirilecek = null;               // "Resmi değiştir" ile değişecek resmin kimliği
+  let acikResim = null;
+
+  const mbYaz = (n) => (n / 1e6).toFixed(1).replace('.', ',');
+  const pisirmeAnahtari = (r) => `${r.surum}|${r.donus}|${r.beyaz ? 1 : 0}|${r.saydamlik}`;
+
+  function resimModuAyarla(acik) {
+    if (acik && eklemeModu) eklemeModuAyarla(false);
+    resimModu = acik;
+    $('#sayfalar').classList.toggle('resim-modu', acik);
+    $('#resim-ipucu').hidden = !acik;
+    const d = $('#resim-ekle');
+    d.setAttribute('aria-pressed', acik ? 'true' : 'false');
+    d.classList.toggle('birincil', acik);
+    d.classList.toggle('ikincil', !acik);
+    if (!acik) bekleyenKaynak = null;
+  }
+
+  function resimYukle(src) {
+    return new Promise((coz, red) => {
+      const img = new Image();
+      img.onload = () => coz(img);
+      img.onerror = () => red(new Error('Resim okunamadı.'));
+      img.src = src;
+    });
+  }
+
+  /* Seçilen dosya → küçültülmüş kaynak (data: adresi). Saydamlığı olan resim PNG kalır. */
+  async function resmiOku(f) {
+    if (!/^image\/(png|jpeg)$/.test(f.type)) throw new Error('Yalnız PNG ya da JPEG resim eklenebilir.');
+    if (f.size > 25_000_000) throw new Error('Resim çok büyük (en çok 25 MB).');
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await resimYukle(url);
+      const olcek = Math.min(1, RESIM_EN_BUYUK / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * olcek));
+      c.height = Math.max(1, Math.round(img.naturalHeight * olcek));
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const alfa = f.type === 'image/png' && ResimGeo.alfaVar(ctx.getImageData(0, 0, c.width, c.height).data);
+      return { kaynak: c.toDataURL(alfa ? 'image/png' : 'image/jpeg', 0.92), gen: c.width, yuk: c.height };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  /* Ayarların işlendiği son resim (Blob + gösterim adresi); aynı ayarda önbellekten. Sunucu
+   * sınırını aşarsa küçültülerek yeniden pişirilir. */
+  async function pisir(r) {
+    const anahtar = pisirmeAnahtari(r);
+    if (r.pisirilmis && r.pisirilmis.anahtar === anahtar) return r.pisirilmis;
+    const img = await resimYukle(r.kaynak);
+    const kaynakPng = r.kaynak.startsWith('data:image/png');
+    for (let olcek = 1; ; olcek *= 0.75) {
+      const gw = Math.max(1, Math.round(img.naturalWidth * olcek));
+      const gh = Math.max(1, Math.round(img.naturalHeight * olcek));
+      const dik = r.donus === 90 || r.donus === 270;
+      const c = document.createElement('canvas');
+      c.width = dik ? gh : gw;
+      c.height = dik ? gw : gh;
+      const ctx = c.getContext('2d');
+      ctx.translate(c.width / 2, c.height / 2);
+      ctx.rotate((r.donus * Math.PI) / 180);
+      ctx.drawImage(img, -gw / 2, -gh / 2, gw, gh);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      let alfa = false;
+      if (r.beyaz || r.saydamlik < 1 || kaynakPng) {
+        const v = ctx.getImageData(0, 0, c.width, c.height);
+        if (r.beyaz) ResimGeo.beyaziKaldir(v.data);
+        ResimGeo.saydamlikUygula(v.data, r.saydamlik);
+        ctx.putImageData(v, 0, 0);
+        alfa = ResimGeo.alfaVar(v.data);
+      }
+      const blob = await new Promise((coz) => c.toBlob(coz, alfa ? 'image/png' : 'image/jpeg', 0.9));
+      if (!blob) throw new Error('Resim hazırlanamadı.');
+      if (blob.size <= RESIM_AZAMI_BAYT) {
+        if (r.pisirilmis) URL.revokeObjectURL(r.pisirilmis.url);
+        r.pisirilmis = { anahtar, blob, url: URL.createObjectURL(blob) };
+        return r.pisirilmis;
+      }
+      if (olcek < 0.2) throw new Error('Resim çok büyük; daha küçük bir resim seçin.');
+    }
+  }
+
+  function sayfaOrani(sayfa) {
+    const ic = document.querySelector(`.sayfa-ic[data-no="${sayfa}"]`);
+    const r = ic && ic.getBoundingClientRect();
+    return r && r.height ? r.width / r.height : 1;
+  }
+
+  function kutuyuUygula(el, r) {
+    el.style.left = `${r.x * 100}%`;
+    el.style.top = `${r.y * 100}%`;
+    el.style.width = `${r.w * 100}%`;
+    el.style.height = `${r.h * 100}%`;
+  }
+
+  const TUTAMACLAR = ResimGeo.KOSELER.concat(ResimGeo.KENARLAR);
+
+  function resimleriCiz() {
+    document.querySelectorAll('.resim-ek').forEach((el) => el.remove());
+    resimler.forEach((r, id) => {
+      const ic = document.querySelector(`.sayfa-ic[data-no="${r.sayfa}"]`);
+      if (!ic) return;
+      const el = document.createElement('div');
+      el.className = 'resim-ek' + (id === seciliResim ? ' secili' : '');
+      el.dataset.rs = id;
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', 'Eklenen resim: sürükleyerek taşıyın, tıklayınca ayarları açılır');
+      kutuyuUygula(el, r);
+      const img = document.createElement('img');
+      img.alt = '';
+      img.draggable = false;
+      el.appendChild(img);
+      TUTAMACLAR.forEach((t) => {
+        const h = document.createElement('span');
+        h.className = `tutamac t-${t}`;
+        h.dataset.t = t;
+        el.appendChild(h);
+      });
+      ic.appendChild(el);
+      const anahtar = pisirmeAnahtari(r);
+      pisir(r).then((pis) => { if (pisirmeAnahtari(r) === anahtar) img.src = pis.url; })
+        .catch((e) => durum($('#islem-durum'), e.message, true));
+    });
+  }
+
+  function resimSec(id) {
+    seciliResim = id;
+    document.querySelectorAll('.resim-ek').forEach((el) => el.classList.toggle('secili', el.dataset.rs === id));
+  }
+
+  function resimListesiCiz() {
+    const ul = $('#resim-listesi');
+    ul.textContent = '';
+    $('#resim-baslik').hidden = resimler.size === 0;
+    resimler.forEach((r, id) => {
+      const li = document.createElement('li');
+      const oz = document.createElement('span');
+      oz.className = 'ozet';
+      oz.dataset.rsGit = id;
+      const sno = document.createElement('span');
+      sno.className = 'sno';
+      sno.textContent = `S${r.sayfa}`;
+      const t = document.createElement('span');
+      t.className = 'yeni-m';
+      const ayar = [r.donus ? `${r.donus}°` : '', r.beyaz ? 'zemin kaldırıldı' : '',
+        r.saydamlik < 1 ? `saydamlık %${Math.round((1 - r.saydamlik) * 100)}` : ''].filter(Boolean).join(', ');
+      t.textContent = `＋ Resim${ayar ? ` (${ayar})` : ''}`;
+      oz.append(sno, t);
+      const k = document.createElement('button');
+      k.type = 'button';
+      k.className = 'dugme bag';
+      k.textContent = 'Kaldır';
+      k.dataset.rsKaldir = id;
+      li.append(oz, k);
+      ul.appendChild(li);
+    });
+  }
+
+  $('#resim-listesi').addEventListener('click', (ev) => {
+    const k = ev.target.closest('[data-rs-kaldir]');
+    if (k) { resimKaldir(k.dataset.rsKaldir); return; }
+    const g = ev.target.closest('[data-rs-git]');
+    if (!g) return;
+    const el = document.querySelector(`.resim-ek[data-rs="${CSS.escape(g.dataset.rsGit)}"]`);
+    if (el) {
+      resimSec(g.dataset.rsGit);
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.remove('parla'); void el.offsetWidth; el.classList.add('parla');
+    }
+    if (dokunmatik || ev.detail >= 2) { yanPanel(false); resimPenceresi(g.dataset.rsGit); }
+  });
+
+  function resimKaldir(id) {
+    const r = resimler.get(id);
+    if (r && r.pisirilmis) URL.revokeObjectURL(r.pisirilmis.url);
+    resimler.delete(id);
+    if (seciliResim === id) seciliResim = null;
+    degisti();
+  }
+
+  $('#resim-ekle').addEventListener('click', () => {
+    if (resimModu) { resimModuAyarla(false); return; }
+    if (resimler.size >= AZAMI_RESIM) { durum($('#islem-durum'), `En çok ${AZAMI_RESIM} resim eklenebilir.`, true); return; }
+    degistirilecek = null;
+    $('#resim-dosya').click();
+  });
+
+  $('#resim-dosya').addEventListener('change', async () => {
+    const girdi = $('#resim-dosya');
+    const f = girdi.files && girdi.files[0];
+    girdi.value = '';
+    if (!f) return;
+    let yeni;
+    try {
+      yeni = await resmiOku(f);
+    } catch (e) {
+      durum(degistirilecek ? $('#resim-hata') : $('#islem-durum'), e.message, true);
+      return;
+    }
+    if (degistirilecek && resimler.has(degistirilecek)) {
+      // Aynı yerde, aynı ende; boy yeni resmin oranından. Döndürme sıfırlanır.
+      const r = resimler.get(degistirilecek);
+      const oranWH = sayfaOrani(r.sayfa);
+      const merkezY = r.y + r.h / 2;
+      let h = r.w * (yeni.yuk / yeni.gen) * oranWH;
+      let w = r.w;
+      if (h > 1) { w /= h; h = 1; }
+      Object.assign(r, ResimGeo.tasi({ x: r.x, y: merkezY - h / 2, w, h }, 0, 0),
+        { kaynak: yeni.kaynak, surum: r.surum + 1, donus: 0 });
+      degistirilecek = null;
+      resimDegisti(r);
+      return;
+    }
+    resimModuAyarla(true);
+    bekleyenKaynak = yeni;
+    if (darEkran()) yanPanel(false);
+  });
+
+  function resmiYerlestir(e) {
+    const ic = e.target.closest('.sayfa-ic');
+    if (!ic || !bekleyenKaynak) return;
+    const rr = ic.getBoundingClientRect();
+    const kutu = ResimGeo.yerlestir((e.clientX - rr.left) / rr.width, (e.clientY - rr.top) / rr.height,
+      bekleyenKaynak.gen, bekleyenKaynak.yuk, rr.width, rr.height);
+    resimSayac += 1;
+    const id = `r${resimSayac}`;
+    resimler.set(id, Object.assign({ sayfa: Number(ic.dataset.no), donus: 0, saydamlik: 1, beyaz: false,
+      kaynak: bekleyenKaynak.kaynak, surum: 1 }, kutu));
+    resimModuAyarla(false);
+    seciliResim = id;
+    degisti();
+  }
+
+  // Sürükleyerek taşıma ve tutamaçla boyutlandırma (fare ve dokunma); 4 pikselden az hareket tıklamadır.
+  $('#sayfalar').addEventListener('pointerdown', (ev) => {
+    const el = ev.target.closest('.resim-ek');
+    if (!el) { if (seciliResim && !ev.target.closest('.tutamac')) resimSec(null); return; }
+    if (ev.button > 0) return;
+    ev.preventDefault();
+    const id = el.dataset.rs;
+    const r = resimler.get(id);
+    if (!r) return;
+    resimSec(id);
+    const tut = ev.target.closest('.tutamac');
+    const sayfaR = el.parentElement.getBoundingClientRect();
+    const bas = { cx: ev.clientX, cy: ev.clientY, kutu: { x: r.x, y: r.y, w: r.w, h: r.h } };
+    let oynadi = false;
+    el.setPointerCapture(ev.pointerId);
+    const hareket = (m) => {
+      if (!oynadi && Math.hypot(m.clientX - bas.cx, m.clientY - bas.cy) < 4) return;
+      oynadi = true;
+      const dx = (m.clientX - bas.cx) / sayfaR.width;
+      const dy = (m.clientY - bas.cy) / sayfaR.height;
+      Object.assign(r, tut ? ResimGeo.boyutla(bas.kutu, tut.dataset.t, dx, dy) : ResimGeo.tasi(bas.kutu, dx, dy));
+      kutuyuUygula(el, r);
+    };
+    const birak = () => {
+      el.removeEventListener('pointermove', hareket);
+      el.removeEventListener('pointerup', birak);
+      el.removeEventListener('pointercancel', birak);
+      if (oynadi) degisti();
+      else if (!tut) resimPenceresi(id);
+    };
+    el.addEventListener('pointermove', hareket);
+    el.addEventListener('pointerup', birak);
+    el.addEventListener('pointercancel', birak);
+  });
+
+  // Klavye: Enter ayarları açar, Delete kaldırır, ok tuşları taşır (Shift ile daha çok).
+  $('#sayfalar').addEventListener('keydown', (ev) => {
+    const el = ev.target.closest('.resim-ek');
+    if (!el) return;
+    const id = el.dataset.rs;
+    const r = resimler.get(id);
+    if (!r) return;
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); resimPenceresi(id); return; }
+    if (ev.key === 'Delete' || ev.key === 'Backspace') { ev.preventDefault(); resimKaldir(id); return; }
+    const adim = ev.shiftKey ? 0.02 : 0.005;
+    const yon = { ArrowLeft: [-adim, 0], ArrowRight: [adim, 0], ArrowUp: [0, -adim], ArrowDown: [0, adim] }[ev.key];
+    if (!yon) return;
+    ev.preventDefault();
+    Object.assign(r, ResimGeo.tasi(r, yon[0], yon[1]));
+    kutuyuUygula(el, r);
+    degisti();
+    const yeniEl = document.querySelector(`.resim-ek[data-rs="${CSS.escape(id)}"]`);
+    if (yeniEl) yeniEl.focus();
+  });
+
+  // ---------- Resim penceresi ----------
+  function saydamlikYaz() {
+    $('#resim-saydamlik-deger').textContent = `%${$('#resim-saydamlik').value}`;
+  }
+
+  function onizlemeGuncelle(r) {
+    const img = $('#resim-onizleme');
+    const anahtar = pisirmeAnahtari(r);
+    pisir(r).then((pis) => { if (pisirmeAnahtari(r) === anahtar) img.src = pis.url; })
+      .catch((e) => durum($('#resim-hata'), e.message, true));
+  }
+
+  function resimDegisti(r) {
+    if (acikResim && resimler.get(acikResim) === r) onizlemeGuncelle(r);
+    degisti();
+  }
+
+  function resimPenceresi(id) {
+    const r = resimler.get(id);
+    if (!r) return;
+    acikResim = id;
+    resimSec(id);
+    durum($('#resim-hata'), '');
+    $('#resim-bilgi').textContent = `Sayfa ${r.sayfa}`;
+    $('#resim-saydamlik').value = String(Math.round((1 - r.saydamlik) * 100));
+    saydamlikYaz();
+    $('#resim-beyaz').checked = r.beyaz;
+    $('#resim-onizleme').removeAttribute('src');
+    onizlemeGuncelle(r);
+    $('#resim-pencere').showModal();
+  }
+
+  function acikDondur(ileri) {
+    const r = resimler.get(acikResim);
+    if (!r) return;
+    r.donus = (r.donus + (ileri ? 90 : 270)) % 360;
+    Object.assign(r, ResimGeo.dondur(r, sayfaOrani(r.sayfa)));
+    resimDegisti(r);
+  }
+  $('#resim-saga').addEventListener('click', () => acikDondur(true));
+  $('#resim-sola').addEventListener('click', () => acikDondur(false));
+  $('#resim-saydamlik').addEventListener('input', saydamlikYaz);
+  $('#resim-saydamlik').addEventListener('change', () => {
+    const r = resimler.get(acikResim);
+    if (!r) return;
+    r.saydamlik = Math.max(0.1, 1 - Number($('#resim-saydamlik').value) / 100);
+    resimDegisti(r);
+  });
+  $('#resim-beyaz').addEventListener('change', () => {
+    const r = resimler.get(acikResim);
+    if (!r) return;
+    r.beyaz = $('#resim-beyaz').checked;
+    resimDegisti(r);
+  });
+  $('#resim-degistir').addEventListener('click', () => {
+    degistirilecek = acikResim;
+    durum($('#resim-hata'), '');
+    $('#resim-dosya').click();
+  });
+  $('#resim-kaldir').addEventListener('click', () => {
+    const id = acikResim;
+    $('#resim-pencere').close();
+    resimKaldir(id);
+  });
+  $('#resim-form').addEventListener('submit', (ev) => { ev.preventDefault(); $('#resim-pencere').close(); });
+  $('#resim-pencere').addEventListener('close', () => { acikResim = null; });
 
   window.addEventListener('beforeunload', (e) => {
     if (toplamDegisiklik() && !indirildi) { e.preventDefault(); e.returnValue = ''; }
