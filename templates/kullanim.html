@@ -23,6 +23,7 @@
     <div class="ozet-kutu"><span class="deger">{{ toplam.uretilen }}</span><span class="etiket">Oluşturulan PDF</span></div>
     <div class="ozet-kutu"><span class="deger">{{ toplam.degisen }}</span><span class="etiket">Değiştirilen metin</span></div>
     <div class="ozet-kutu"><span class="deger">{{ toplam.eklenen }}</span><span class="etiket">Eklenen metin</span></div>
+    <div class="ozet-kutu"><span class="deger">{{ toplam.cevrilen }}</span><span class="etiket">Word / Excel'e çevrilen</span></div>
     <div class="ozet-kutu"><span class="deger">{{ toplam.indirilen }}</span><span class="etiket">İndirilen / paylaşılan</span></div>
     <div class="ozet-kutu {{ 'sorunlu' if toplam.sorun else '' }}"><span class="deger">{{ toplam.sorun }}</span><span class="etiket">Sorun</span></div>
   </section>
@@ -34,7 +35,7 @@
     <table class="tablo">
       <thead>
         <tr><th>Kullanıcı</th><th>Giriş</th><th>Açılan PDF</th><th>Farklı dosya</th><th>Sayfa</th>
-            <th>Oluşturulan</th><th>Değiştirilen metin</th><th>Eklenen metin</th><th>İndirilen</th><th>Sorun</th><th>Son kullanım</th></tr>
+            <th>Oluşturulan</th><th>Değiştirilen metin</th><th>Eklenen metin</th><th>Çevrilen</th><th>İndirilen</th><th>Sorun</th><th>Son kullanım</th></tr>
       </thead>
       <tbody>
         {% for r in satirlar %}
@@ -47,6 +48,7 @@
           <td data-etiket="Oluşturulan">{{ r.uretilen }}</td>
           <td data-etiket="Değiştirilen metin">{{ r.degisen }}</td>
           <td data-etiket="Eklenen metin">{{ r.eklenen }}</td>
+          <td data-etiket="Çevrilen">{{ r.cevrilen }}</td>
           <td data-etiket="İndirilen">{{ r.indirilen }}</td>
           <td data-etiket="Sorun">{{ r.sorun }}</td>
           <td class="kucuk-not" data-etiket="Son kullanım">{{ r.son|tarihsaat }}</td>

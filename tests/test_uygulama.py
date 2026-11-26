@@ -196,3 +196,41 @@ def test_uret_resim_ekler_form_alanlarindan(istemci, ornek):
         r = istemci.post('/api/uret', headers=_xhr(istemci), data={
             'pdf': (io.BytesIO(veri), 'f.pdf'), 'duzeltmeler': '[]', **alanlar})
         assert r.status_code == 400
+
+
+def test_cevir_word_ve_excel_dosya_adi_ve_turu(istemci, ornek):
+    _giris(istemci)
+    veri = ornek('chrome-fatura.pdf')
+    beklenen = {'word': ('f.docx', 'wordprocessingml'), 'excel': ('f.xlsx', 'spreadsheetml')}
+    for bicim, (ad, tur) in beklenen.items():
+        r = istemci.post('/api/cevir', headers=_xhr(istemci), data={
+            'pdf': (io.BytesIO(veri), 'f.pdf'), 'bicim': bicim, 'duzeltmeler': '[]'})
+        assert r.status_code == 200, r.get_data(as_text=True)[:300]
+        assert tur in r.mimetype and f'filename={ad}' in r.headers['Content-Disposition']
+        assert r.data[:2] == b'PK'
+    r = istemci.post('/api/cevir', headers=_xhr(istemci), data={
+        'pdf': (io.BytesIO(veri), 'f.pdf'), 'bicim': 'pptx'})
+    assert r.status_code == 400 and 'biçimi' in r.get_json()['hata']
+
+
+def test_cevir_ekrandaki_degisiklikleri_icerir(istemci, ornek):
+    """Kullanıcı kararı (26.11.2026): ekranda ne görünüyorsa o çevrilir."""
+    import openpyxl
+    from tests.test_motor import _parcalar
+    _giris(istemci)
+    veri = ornek('chrome-fatura.pdf')
+    p = _parcalar(veri)['Işıklı uyarı levhası']
+    duzeltme = [{'id': p['id'], 'eski': 'Işıklı uyarı levhası', 'yeni': 'Işıklı uyarı panosu',
+                 'hiza': 'sol', 'font': 'otomatik', 'sigdir': False}]
+    r = istemci.post('/api/cevir', headers=_xhr(istemci), data={
+        'pdf': (io.BytesIO(veri), 'f.pdf'), 'bicim': 'excel', 'duzeltmeler': json.dumps(duzeltme)})
+    assert r.status_code == 200, r.get_data(as_text=True)[:300]
+    degerler = {c.value for row in openpyxl.load_workbook(io.BytesIO(r.data)).active.iter_rows() for c in row}
+    assert 'Işıklı uyarı panosu' in degerler and 'Işıklı uyarı levhası' not in degerler
+
+
+def test_cevir_hatasi_json_ile_doner(istemci, ornek):
+    _giris(istemci)
+    r = istemci.post('/api/cevir', headers=_xhr(istemci), data={
+        'pdf': (io.BytesIO(ornek('chrome-paragraf.pdf')), 'f.pdf'), 'bicim': 'excel'})
+    assert r.status_code == 400 and 'tablo bulunamadı' in r.get_json()['hata']

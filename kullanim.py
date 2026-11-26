@@ -23,6 +23,8 @@ TURLER = {
     'acildi': 'PDF açtı',
     'onizlendi': 'Önizledi',
     'uretildi': 'PDF oluşturdu',
+    'word': "Word'e çevirdi",
+    'excel': "Excel'e çevirdi",
     'indirildi': 'İndirdi',
     'paylasildi': 'Paylaştı',
     'buyuk_dosya': 'Boyut sınırına takıldı',
@@ -42,6 +44,8 @@ HATALAR = {
     'izin': 'değiştirme izni yok',
     'eslesmedi': 'metin dosyada bulunamadı',
     'resim': 'resim okunamadı',
+    'tablo_yok': 'tablo bulunamadı',
+    'sure': 'süre sınırı',
     'denetim': 'güvenlik denetimi durdurdu',
     'kota': 'aylık belge hakkı doldu',
     'kota_okunamadi': 'belge hakkı denetlenemedi',
@@ -105,6 +109,7 @@ def ozet(gun):
           count(*) FILTER (WHERE tur = 'uretildi' AND basarili) AS uretilen,
           coalesce(sum(duzeltme) FILTER (WHERE tur = 'uretildi' AND basarili), 0) AS degisen,
           coalesce(sum(ekleme) FILTER (WHERE tur = 'uretildi' AND basarili), 0) AS eklenen,
+          count(*) FILTER (WHERE tur IN ('word', 'excel') AND basarili) AS cevrilen,
           count(*) FILTER (WHERE tur IN ('indirildi', 'paylasildi')) AS indirilen,
           count(*) FILTER (WHERE NOT basarili OR tur = 'buyuk_dosya') AS sorun,
           max(zaman) AS son
@@ -114,7 +119,7 @@ def ozet(gun):
 
 
 def toplam(satirlar):
-    alanlar = ('giris', 'acilan', 'sayfa', 'uretilen', 'degisen', 'eklenen', 'indirilen', 'sorun')
+    alanlar = ('giris', 'acilan', 'sayfa', 'uretilen', 'degisen', 'eklenen', 'cevrilen', 'indirilen', 'sorun')
     return {a: sum(int(r[a] or 0) for r in satirlar) for a in alanlar}
 
 

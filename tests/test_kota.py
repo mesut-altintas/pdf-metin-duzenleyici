@@ -282,6 +282,46 @@ def test_basarisiz_uretim_sayilmaz(app, monkeypatch):
     assert vt.sorgu('SELECT count(*) AS n FROM kota_sayaci')[0]['n'] == 0
 
 
+def _cevir(ist, veri, bicim):
+    import io
+    return ist.post('/api/cevir', headers=_xhr(ist),
+                    data={'pdf': (io.BytesIO(veri), 'a.pdf'), 'bicim': bicim, 'duzeltmeler': '[]'})
+
+
+def test_cevirme_ayni_haktan_sayilir_ayni_belge_bir_kez(app, monkeypatch):
+    """Kullanıcı kararı (26.11.2026): çevirme de belge hakkından; aynı belgeyi düzenleyip
+    Word'e ve Excel'e çevirmek tek hak. Başarısız çevirme sayılmaz; dolu kotada çevrilmez."""
+    from pdf_duzenle import cevir, motor
+    cevrilen = []
+
+    def sahte(bicim):
+        def islev(veri):
+            if b'bozuk' in veri:
+                raise motor.PdfHatasi('tablo yok', kod='tablo_yok')
+            cevrilen.append(bicim)
+            return b'PK sahte', []
+        return islev
+    monkeypatch.setattr(cevir, 'word', sahte('word'))
+    monkeypatch.setattr(cevir, 'excel', sahte('excel'))
+    vt.ekle('ayse', '', generate_password_hash(SIFRE), False, False, 'deneme')
+    ist = _giris(app, 'ayse', SIFRE)
+    assert _uret(ist, b'%PDF A').headers['X-Kota'] == '1/3'
+    assert _cevir(ist, b'%PDF A', 'word').headers['X-Kota'] == '1/3'
+    assert _cevir(ist, b'%PDF A', 'excel').headers['X-Kota'] == '1/3'
+    assert _cevir(ist, b'%PDF bozuk', 'excel').status_code == 400
+    assert _cevir(ist, b'%PDF B', 'excel').headers['X-Kota'] == '2/3'
+    assert _cevir(ist, b'%PDF C', 'word').headers['X-Kota'] == '3/3'
+    r = _cevir(ist, b'%PDF D', 'word')
+    assert r.status_code == 403 and r.get_json()['kod'] == 'kota'
+    assert cevrilen == ['word', 'excel', 'excel', 'word']       # dolu kotada çevirme hiç çalışmaz
+    turler = [(r['tur'], r['basarili'], r['hata']) for r in
+              vt.sorgu("SELECT tur, basarili, hata FROM kullanim_olayi WHERE tur IN ('word', 'excel') ORDER BY id")]
+    assert turler == [('word', True, None), ('excel', True, None), ('excel', False, 'tablo_yok'),
+                      ('excel', True, None), ('word', True, None), ('word', False, 'kota')]
+    # Değişiklik yoksa motor çalışmaz (yüklenen dosya olduğu gibi çevrilir).
+    assert app.config['URETIM_SAYISI'] == 1
+
+
 def test_ortam_yoneticisi_ve_hediye_plan_kotaya_takilmaz(app):
     vt.ekle('mehmet', '', generate_password_hash(SIFRE), False, False, 'deneme', 'hediye')
     for ist in (_giris(app, 'deneme', TEST_SIFRE), _giris(app, 'mehmet', SIFRE)):

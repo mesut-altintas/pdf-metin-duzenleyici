@@ -13,7 +13,7 @@ import kota
 import kullanicilar as vt
 import kullanim
 from giris import login_required
-from pdf_duzenle import motor
+from pdf_duzenle import cevir, motor
 
 pdf_bp = Blueprint('pdf', __name__)
 
@@ -114,12 +114,36 @@ def analiz():
 @pdf_bp.route('/api/uret', methods=['POST'])
 @login_required
 def uret():
+    return _isle('pdf')
+
+
+# Çevirme: ekrandaki değişiklikler dahil (kullanıcı kararı, 26.11.2026) — değişiklik varsa önce
+# PDF üretilir, sonra çevrilir. Aylık belge hakkından üretimle aynı biçimde sayılır: parmak izi
+# yüklenen dosyanın; aynı belgeyi düzenleyip hem Word'e hem Excel'e çevirmek tek hak.
+CEVIRMELER = {
+    'word': ('word', 'docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+    'excel': ('excel', 'xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+}
+
+
+@pdf_bp.route('/api/cevir', methods=['POST'])
+@login_required
+def cevir_():
+    bicim = request.form.get('bicim')
+    if bicim not in CEVIRMELER:
+        return _hata('Geçersiz çevirme biçimi.')
+    return _isle(bicim)
+
+
+def _isle(bicim):
+    """`pdf`: düzenlenmiş PDF; `word` / `excel`: (değişiklikler işlenmiş) belgenin çevirisi."""
     bas = time.monotonic()
     veri = None
     duzeltmeler = eklemeler = paragraflar = resimler = None
+    tur = 'uretildi' if bicim == 'pdf' else bicim
 
     def olc(**ek):
-        _olcum('uretildi', bas, veri, duzeltme=_toplam(duzeltmeler, paragraflar), ekleme=_say(eklemeler),
+        _olcum(tur, bas, veri, duzeltme=_toplam(duzeltmeler, paragraflar), ekleme=_say(eklemeler),
                resim=_say(resimler), **ek)
 
     try:
@@ -148,18 +172,30 @@ def uret():
         return _kota_dolu(kd)
 
     try:
-        sonuc, uyarilar = motor.uygula(veri, duzeltmeler, eklemeler, paragraflar, resimler)
+        if bicim == 'pdf' or _degisiklik_var(duzeltmeler, eklemeler, paragraflar, resimler):
+            sonuc, uyarilar = motor.uygula(veri, duzeltmeler, eklemeler, paragraflar, resimler)
+        else:
+            sonuc, uyarilar = veri, []
+        if bicim != 'pdf':
+            islev, uzanti, mime = CEVIRMELER[bicim]
+            sonuc, cevirme_uyarilari = getattr(cevir, islev)(sonuc)
+            uyarilar = uyarilar + cevirme_uyarilari
+        else:
+            uzanti, mime = 'pdf', 'application/pdf'
     except motor.PdfHatasi as e:
         olc(basarili=False, hata=e.kod)
         return _hata(str(e))
     except Exception:
-        log.exception('üretim başarısız')
+        log.exception('üretim başarısız (%s)', bicim)
         olc(basarili=False, hata='beklenmeyen')
-        return _hata('PDF oluşturulamadı. Beklenmeyen bir hata oldu.', 500)
+        if bicim == 'pdf':
+            return _hata('PDF oluşturulamadı. Beklenmeyen bir hata oldu.', 500)
+        return _hata('Belge çevrilemedi. Beklenmeyen bir hata oldu.', 500)
 
     if len(sonuc) > AZAMI_YANIT:
         olc(basarili=False, hata='yanit')
-        return _hata(f'Oluşan PDF {mb(len(sonuc))} MB; sunucunun gönderebileceği sınırı '
+        adi = {'pdf': 'Oluşan PDF', 'word': 'Word dosyası', 'excel': 'Excel dosyası'}[bicim]
+        return _hata(f'{adi} {mb(len(sonuc))} MB; sunucunun gönderebileceği sınırı '
                      f'({mb(AZAMI_YANIT)} MB) aşıyor.', 413)
 
     kullanilan = None
@@ -177,14 +213,18 @@ def uret():
     olc(uyari=len(uyarilar))
 
     kok = PurePath(ad).stem or 'belge'
-    yanit = send_file(io.BytesIO(sonuc), mimetype='application/pdf', as_attachment=True,
-                      download_name=f'{kok}-duzenlenmis.pdf')
+    indirme = f'{kok}-duzenlenmis.pdf' if bicim == 'pdf' else f'{kok}.{uzanti}'
+    yanit = send_file(io.BytesIO(sonuc), mimetype=mime, as_attachment=True, download_name=indirme)
     if uyarilar:
         yanit.headers['X-Uyarilar'] = base64.b64encode(
             json.dumps(uyarilar, ensure_ascii=False).encode('utf-8')).decode('ascii')
     if kullanilan is not None:
         yanit.headers['X-Kota'] = f'{kullanilan}/{kd.sinir}'
     return yanit
+
+
+def _degisiklik_var(*listeler):
+    return any(isinstance(x, list) and x for x in listeler)
 
 
 def _resimleri_oku():
