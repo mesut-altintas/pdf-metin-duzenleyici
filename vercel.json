@@ -3,7 +3,7 @@
   "regions": ["fra1"],
   "functions": {
     "app.py": {
-      "maxDuration": 60,
+      "maxDuration": 300,
       "excludeFiles": "{tests/**,.venv/**,public/**,**/__pycache__/**}"
     }
   }

@@ -23,10 +23,11 @@ from pdf_duzenle import motor
 
 log = logging.getLogger(__name__)
 
-# Bir istekte çözümlemeye ayrılan süre. Vercel işlevi 60 sn'de kesiliyor
-# (vercel.json); belge yazımı ve cevap için pay bırakılır. Aşılırsa yarım dosya
-# gönderilmez, kullanıcıya söylenir.
-SURE_BUTCESI = 45.0
+# Bir istekte çözümlemeye ayrılan süre. Vercel işlevi 300 sn'de kesiliyor (vercel.json).
+# Ölçüm, 26.11.2026, önizleme (fra1, 1 vCPU): 30 sayfalık ekstre Word'e 61 sn, Excel'e
+# 27 sn; Word'de yazım çözümleme kadar sürüyor. Aşılırsa yarım dosya gönderilmez,
+# kullanıcıya söylenir.
+SURE_BUTCESI = 120.0
 AZAMI_HUCRE = 32_767          # Excel hücresinin üst sınırı
 SAYFA_ADI = 'Tablolar'
 
