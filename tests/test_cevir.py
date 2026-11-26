@@ -257,3 +257,81 @@ def test_yerel_cogunluktan_tarih_sayilmaz():
     assert cevir._yerel(['1.250,00', '85,50', '01.10.2025', '01.11.2025', '02.11.2025']) == 'tr'
     assert cevir._yerel(['1,250.00', '85.50', '3.25']) == 'en'
     assert cevir._yerel(['01.10.2025', '02.10.2025']) == 'tr'
+
+
+# ---------------------------------------------------------------- yazı ve boşluk (Chrome PDF'leri)
+
+def _bosluk_ayri_pdf():
+    """Chrome / Skia gibi: sözcükler bir yazı tipinden, aradaki boşluk başka bir yazı tipinden
+    çizilir; MuPDF boşluğu ayrı bir parça (span) olarak verir."""
+    doc = fitz.open()
+    page = doc.new_page()
+    x = 72
+    for i, sozcuk in enumerate(['Bir', 'iki', 'uc', 'dort']):
+        if i:
+            page.insert_text((x, 100), ' ', fontname='cour', fontsize=12)
+            x += fitz.get_text_length(' ', fontname='cour', fontsize=12)
+        page.insert_text((x, 100), sozcuk, fontname='helv', fontsize=12)
+        x += fitz.get_text_length(sozcuk, fontname='helv', fontsize=12)
+    return doc.tobytes()
+
+
+def test_word_ayri_parcadaki_sozcuk_boslugu_korunur():
+    veri = _bosluk_ayri_pdf()
+    satir = fitz.open(stream=veri)[0].get_text('rawdict')['blocks'][0]['lines'][0]
+    assert [''.join(c['c'] for c in s['chars']) for s in satir['spans']][:3] == ['Bir', ' ', 'iki']
+    metin = ' | '.join(p.text for p in _docx(cevir.word(veri)[0]).paragraphs if p.text.strip())
+    assert 'Bir iki uc dort' in metin
+
+
+def _type3_pdf():
+    """İki Type3 yazı tipli sayfa: tanımlarında aile, kalınlık ve eğim yazılı (Chrome böyle yazar)."""
+    def yazi_tipi(no, tanim_no):
+        return (f'{no} 0 obj <</Type/Font/Subtype/Type3/FontBBox[0 0 500 700]'
+                f'/FontMatrix[0.001 0 0 0.001 0 0]/CharProcs<</H 9 0 R/e 9 0 R/l 9 0 R/o 9 0 R>>'
+                f'/Encoding<</Type/Encoding/Differences[72/H 101/e 108/l 111/o]>>/FirstChar 72'
+                f'/LastChar 111/Widths[{" ".join(["500"] * 40)}]/FontDescriptor {tanim_no} 0 R'
+                f'/Resources<<>>>> endobj\n')
+    icerik = b'BT /F1 24 Tf 72 700 Td (Hello) Tj ET BT /F2 12 Tf 72 600 Td (Hello) Tj ET'
+    cizim = b'500 0 0 0 450 700 d1 0 0 450 700 re f'
+    ham = (b'%PDF-1.4\n1 0 obj <</Type/Catalog/Pages 2 0 R>> endobj\n'
+           b'2 0 obj <</Type/Pages/Kids[3 0 R]/Count 1>> endobj\n'
+           b'3 0 obj <</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]'
+           b'/Resources<</Font<</F1 5 0 R/F2 6 0 R>>>>/Contents 4 0 R>> endobj\n'
+           + b'4 0 obj <</Length %d>> stream\n' % len(icerik) + icerik + b'\nendstream endobj\n'
+           + yazi_tipi(5, 7).encode() + yazi_tipi(6, 8).encode()
+           + b'7 0 obj <</Type/FontDescriptor/FontFamily(Inter)/FontName/ABCDEF+Inter-Bold'
+             b'/FontWeight 700/Flags 32/ItalicAngle 0/FontBBox[0 0 500 700]>> endobj\n'
+           + b'8 0 obj <</Type/FontDescriptor/FontFamily(Merriweather)/FontName/GHIJKL+Merriweather-Italic'
+             b'/FontWeight 400/Flags 34/ItalicAngle -12/FontBBox[0 0 500 700]>> endobj\n'
+           + b'9 0 obj <</Length %d>> stream\n' % len(cizim) + cizim + b'\nendstream endobj\ntrailer <</Root 1 0 R>>\n%%EOF\n')
+    return fitz.open(stream=ham).tobytes()       # MuPDF xref tablosunu kurar
+
+
+def test_word_type3_yazi_tipinin_ailesi_ve_kalinligi_tanimindan():
+    veri = _type3_pdf()
+    parcalar = [s for b in fitz.open(stream=veri)[0].get_text('dict')['blocks'] for l in b['lines'] for s in l['spans']]
+    assert [s['font'][:5] for s in parcalar] == ['Type3', 'Type3'] and all(s['flags'] & 16 == 0 for s in parcalar)
+    d = _docx(cevir.word(veri)[0])
+    kosular = [r for p in d.paragraphs for r in p.runs if r.text.strip()]
+    assert [(r.text, r.font.name, bool(r.bold), bool(r.italic)) for r in kosular] == [
+        ('Hello', 'Arial', True, False), ('Hello', 'Times New Roman', False, True)]
+
+
+@pytest.mark.parametrize('ad, bayrak, beklenen', [
+    ('Calibri-Bold', 16, 'Calibri'),
+    ('TimesNewRomanPSMT', 0, 'Times New Roman'),
+    ('ArialMT', 0, 'Arial'),
+    ('ABCDEF+Helvetica-Oblique', 2, 'Helvetica'),
+    ('Segoe UI', 0, 'Segoe UI'),
+    ('TrebuchetMS-Bold', 16, 'Trebuchet MS'),
+    ('CenturyGothic', 0, 'Century Gothic'),
+    ('IBM Plex Sans', 0, 'Arial'),           # web yazı tipi: çoğu bilgisayarda yok
+    ('IBM Plex Mono', 0, 'Courier New'),
+    ('Merriweather', 4, 'Times New Roman'),
+    ('Roboto Slab', 4, 'Times New Roman'),
+    ('PT Sans', 0, 'Arial'),
+    ('', 0, 'Arial'),
+])
+def test_yazi_tipi_adi_yaygin_ya_da_turune_gore_esi(ad, bayrak, beklenen):
+    assert cevir.yazi_tipi_adi(ad, bayrak) == beklenen

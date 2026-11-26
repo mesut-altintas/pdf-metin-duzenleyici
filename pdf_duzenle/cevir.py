@@ -54,8 +54,149 @@ def _yukle():
         # pdf2docx bağlantıyı bir w:r içine yazıyor (w:r > w:hyperlink > w:r); OOXML
         # şemasına aykırı (ölçüldü, 0.5.13). Bağlantı paragrafın doğrudan çocuğu olur.
         p2d_docx.add_hyperlink = _baglanti_ekle
+        _yazi_yamalari()
         _yuklu = Converter
     return _yuklu
+
+
+# ---------------------------------------------------------------- yazı ve boşluk yamaları
+# Ölçüm, 26.11.2026, Chrome'dan yazdırılmış 22 sayfalık bir web sayfası (docs/cevirme.md):
+#  * Sözcük arası boşluk ayrı bir parçada (Chrome / Skia boşluğu ayrı bir Type3 yazı
+#    tipinden çiziyor). pdf2docx yalnız boşluk olan parçayı atıyor → "sözcüklerbirbirineyapışık".
+#  * Yazı tipleri Type3: MuPDF adlarını "Type3 (9 0 R)" diye veriyor, kalın / eğik bayrağı
+#    boş. Word bu adı tanımıyor, Times'a düşüyor; başlıklar kalınlığını kaybediyor. Oysa
+#    yazı tipinin tanımında (FontDescriptor) aile ("IBM Plex Sans") ve kalınlık (700) var.
+#  * Web yazı tipleri (IBM Plex, Inter, Roboto…) çoğu bilgisayarda yok; Word rastgele bir
+#    yazı tipine düşüyor. Yaygın olmayan aile türüne göre Arial / Times New Roman /
+#    Courier New'e eşlenir (görünüm her bilgisayarda aynı kalsın).
+
+YAYGIN_YAZI_TIPLERI = {a.lower(): a for a in (
+    'Arial', 'Arial Narrow', 'Arial Black', 'Helvetica', 'Helvetica Neue', 'Times New Roman', 'Times',
+    'Calibri', 'Calibri Light', 'Cambria', 'Candara', 'Consolas', 'Constantia', 'Corbel', 'Aptos',
+    'Courier New', 'Courier', 'Georgia', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Segoe UI',
+    'Garamond', 'Book Antiqua', 'Palatino Linotype', 'Century Gothic', 'Lucida Console',
+    'Symbol', 'Wingdings')}
+_EGIK, _TIRNAKLI, _ESEN, _KALIN = 2, 4, 8, 16        # MuPDF yazı bayrakları (span['flags'])
+_TYPE3 = re.compile(r'^Type3 \((\d+) 0 R\)$')
+_ALT_KUME = re.compile(r'^[A-Z]{6}\+')
+
+
+def yazi_tipi_adi(ad, bayrak):
+    """Word'e yazılacak yazı tipi: yaygınsa kendisi ("Calibri-Bold", "TimesNewRomanPSMT" de
+    tanınır), değilse türüne göre yaygın bir eşi."""
+    temiz = _ALT_KUME.sub('', ad or '').strip()
+    kok = re.sub(r'(PS)?MT$', '', re.split(r'[-,]', temiz)[0])
+    for aday in (temiz, kok, re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', kok)):
+        if aday.lower() in YAYGIN_YAZI_TIPLERI:
+            return YAYGIN_YAZI_TIPLERI[aday.lower()]
+    kucuk = temiz.lower()
+    if bayrak & _ESEN or any(k in kucuk for k in ('mono', 'courier', 'code', 'consol')):
+        return 'Courier New'
+    if bayrak & _TIRNAKLI or (any(k in kucuk for k in ('serif', 'times', 'roman', 'georgia', 'garamond'))
+                              and 'sans' not in kucuk):
+        return 'Times New Roman'
+    return 'Arial'
+
+
+def _anahtar(doc, xref, ad):
+    try:
+        tur, deger = doc.xref_get_key(xref, ad)
+    except Exception:
+        return None
+    return None if tur in ('null', None) else deger
+
+
+def _type3_tanimi(doc, xref):
+    """Type3 yazı tipinin FontDescriptor'ından aile adı ve MuPDF bayrakları; okunamazsa None."""
+    tanim = _anahtar(doc, xref, 'FontDescriptor')
+    if not tanim or not tanim.endswith(' 0 R'):
+        return None
+    dx = int(tanim.split()[0])
+    aile = _anahtar(doc, dx, 'FontFamily') or ''
+    ad = (_anahtar(doc, dx, 'FontName') or '').lstrip('/')
+    ad = _ALT_KUME.sub('', ad)
+    if not aile and not ad:
+        return None
+    bayrak = 0
+    try:
+        agirlik = float(_anahtar(doc, dx, 'FontWeight') or 0)
+    except ValueError:
+        agirlik = 0
+    if agirlik >= 600 or re.search(r'(?i)bold|black|heavy|semibold|demibold', ad):
+        bayrak |= _KALIN
+    try:
+        egim = float(_anahtar(doc, dx, 'ItalicAngle') or 0)
+    except ValueError:
+        egim = 0
+    if egim or re.search(r'(?i)italic|oblique', ad):
+        bayrak |= _EGIK
+    try:
+        pdf_bayrak = int(_anahtar(doc, dx, 'Flags') or 0)
+    except ValueError:
+        pdf_bayrak = 0
+    if pdf_bayrak & 1:                  # FixedPitch
+        bayrak |= _ESEN
+    if pdf_bayrak & 2:                  # Serif
+        bayrak |= _TIRNAKLI
+    return {'aile': aile or ad.split('-')[0], 'bayrak': bayrak}
+
+
+def _type3_duzelt(doc, bloklar):
+    onbellek = {}
+    for b in bloklar:
+        for satir in b.get('lines', ()):
+            for parca in satir.get('spans', ()):
+                m = _TYPE3.match(parca.get('font') or '')
+                if not m:
+                    continue
+                xref = int(m.group(1))
+                if xref not in onbellek:
+                    onbellek[xref] = _type3_tanimi(doc, xref)
+                t = onbellek[xref]
+                if t:
+                    parca['font'] = t['aile']
+                    parca['flags'] = (parca.get('flags') or 0) | t['bayrak']
+    return bloklar
+
+
+def _yazi_yamalari():
+    from pdf2docx.image.ImageSpan import ImageSpan
+    from pdf2docx.page.RawPageFitz import RawPageFitz
+    from pdf2docx.text.Spans import Spans
+    from pdf2docx.text.TextSpan import TextSpan
+
+    def restore(self, raws):
+        # pdf2docx 0.5.13 Spans.restore'un aynısı; yalnız boşluk parçası bir metin parçasının
+        # ardındaysa atılmaz (satır başı / sonu boşluğunu satırın strip()'i yine siler).
+        for raw_span in raws:
+            if 'image' in raw_span:
+                span = ImageSpan(raw_span)
+            else:
+                span = TextSpan(raw_span)
+                if not span.text.strip() and not span.style:
+                    onceki = self._instances[-1] if self._instances else None
+                    if not (span.text and isinstance(onceki, TextSpan)):
+                        span = None
+            self.append(span)
+        return self
+    Spans.restore = restore
+
+    asil_metin = RawPageFitz._preprocess_text
+
+    def preprocess_text(self, **ayar):
+        return _type3_duzelt(self.page_engine.parent, asil_metin(self, **ayar))
+    RawPageFitz._preprocess_text = preprocess_text
+
+    asil_bicim = TextSpan._set_text_format
+
+    def set_text_format(self, docx_run):
+        ad = self.font
+        self.font = yazi_tipi_adi(ad, self.flags)
+        try:
+            asil_bicim(self, docx_run)
+        finally:
+            self.font = ad
+    TextSpan._set_text_format = set_text_format
 
 
 _GUVENLI_BAGLANTI = re.compile(r'(?i)^(https?://|mailto:)')
