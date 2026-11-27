@@ -144,6 +144,12 @@
         <button type="button" class="dugme ikincil kucuk" id="cevir-word" data-bicim="word">Word'e çevir</button>
         <button type="button" class="dugme ikincil kucuk" id="cevir-excel" data-bicim="excel">Excel'e çevir</button>
       </div>
+      <!-- Çevirme sürerken: kayan çubuk ve geçen süre. Sunucu ilerleme bildirmez, yüzde yok. -->
+      <div id="cevir-ilerleme" class="cevir-ilerleme" role="status" hidden>
+        <div class="ilerleme-cubuk" aria-hidden="true"><span></span></div>
+        <p class="kucuk-not"><span id="cevir-mesaj"></span> <span id="cevir-sure" aria-hidden="true"></span></p>
+        <p class="kucuk-not" id="cevir-uzun" hidden></p>
+      </div>
       <p class="kucuk-not cevir-not masaustu-yalniz">Ekrandaki değişiklikler de çevrilir. Excel'e yalnız tablolar aktarılır.</p>
       <div class="eylemler">
         <button type="button" class="dugme ikincil" id="onizle" disabled>Önizle</button>

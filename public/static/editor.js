@@ -795,13 +795,52 @@
     word: { ad: 'Word', uzanti: '.docx' },
     excel: { ad: 'Excel', uzanti: '.xlsx' },
   };
+
+  // Çevirme sürerken ekranda bir şey kımıldamalı: düğmede dönen simge, kayan çubuk, saniye
+  // sayacı. Sunucu ilerleme bildirmez; yüzde gösterilmez (yalnız işin sürdüğü bilinir).
+  // UZUN_SURE_SN'den sonra süre notu ve "sayfayı kapatmayın" eklenir.
+  const UZUN_SURE_SN = 20;
+  let cevriliyor = false;
+  const sureYaz = (sn) => `${Math.floor(sn / 60)}:${String(sn % 60).padStart(2, '0')}`;
+  function ilerlemeBaslat(dugme, c) {
+    const kutu = $('#cevir-ilerleme');
+    const sure = $('#cevir-sure');
+    const uzun = $('#cevir-uzun');
+    const asilYazi = dugme.textContent;
+    const baslangic = Date.now();
+    cevriliyor = true;
+    dugme.classList.add('calisiyor');
+    dugme.textContent = 'Çevriliyor…';
+    $('#cevir-mesaj').textContent = `${c.ad} dosyası hazırlanıyor`;
+    sure.textContent = `· ${sureYaz(0)}`;
+    uzun.hidden = true;
+    kutu.hidden = false;
+    const zamanlayici = setInterval(() => {
+      const sn = Math.floor((Date.now() - baslangic) / 1000);
+      sure.textContent = `· ${sureYaz(sn)}`;
+      if (uzun.hidden && sn >= UZUN_SURE_SN) {
+        const belge = sayfaSayisi > 1 ? `${sayfaSayisi} sayfalık belge` : 'Uzun belge';
+        uzun.textContent = `${belge} bir iki dakika sürebilir. Sayfayı kapatmayın.`;
+        uzun.hidden = false;
+      }
+    }, 1000);
+    return () => {
+      clearInterval(zamanlayici);
+      cevriliyor = false;
+      dugme.classList.remove('calisiyor');
+      dugme.textContent = asilYazi;
+      kutu.hidden = true;
+    };
+  }
+
   document.querySelectorAll('#cevir-word, #cevir-excel').forEach((dugme) => {
     dugme.addEventListener('click', async () => {
       const bicim = dugme.dataset.bicim;
       const c = CEVIRME[bicim];
       const d = $('#islem-durum');
       kilit(true);
-      durum(d, `${c.ad} dosyası hazırlanıyor… Uzun belgede bir iki dakika sürebilir.`);
+      durum(d, '');
+      const bitir = ilerlemeBaslat(dugme, c);
       try {
         const fd = await govdeHazirla();
         fd.append('bicim', bicim);
@@ -815,6 +854,7 @@
       } catch (e) {
         uretimHatasi(d, e, `${c.ad} dosyası oluşturulmadı`);
       } finally {
+        bitir();
         kilit(false);
       }
     });
@@ -1765,7 +1805,8 @@
   $('#resim-form').addEventListener('submit', (ev) => { ev.preventDefault(); $('#resim-pencere').close(); });
   $('#resim-pencere').addEventListener('close', () => { acikResim = null; });
 
+  // Çevirme sürerken de sorulur: sunucu işi bitirirse hak sayılır ama dosya inmez.
   window.addEventListener('beforeunload', (e) => {
-    if (toplamDegisiklik() && !indirildi) { e.preventDefault(); e.returnValue = ''; }
+    if (cevriliyor || (toplamDegisiklik() && !indirildi)) { e.preventDefault(); e.returnValue = ''; }
   });
 })();

@@ -241,3 +241,44 @@ def test_duzenleyicide_cevirme_dugmeleri(istemci):
     sayfa = istemci.get('/').get_data(as_text=True)
     assert 'id="cevir-word" data-bicim="word"' in sayfa and 'id="cevir-excel" data-bicim="excel"' in sayfa
     assert "Word / Excel'e çevir" in sayfa
+
+
+def _atalar(sayfa, kimlik):
+    """`kimlik`li öğenin (açılış etiketi) atalarının id'leri ve kendi öznitelikleri."""
+    from html.parser import HTMLParser
+
+    bos = {'br', 'img', 'input', 'meta', 'link', 'hr', 'source', 'wbr'}
+
+    class Ayristirici(HTMLParser):
+        yigin, bulunan = [], None
+
+        def handle_starttag(self, etiket, oz):
+            oz = dict(oz)
+            if oz.get('id') == kimlik and self.bulunan is None:
+                self.bulunan = ([o for _, o in self.yigin if o], oz)
+            if etiket not in bos:
+                self.yigin.append((etiket, oz.get('id')))
+
+        def handle_endtag(self, etiket):
+            for i in range(len(self.yigin) - 1, -1, -1):
+                if self.yigin[i][0] == etiket:
+                    del self.yigin[i:]
+                    break
+
+    a = Ayristirici()
+    a.feed(sayfa)
+    assert a.bulunan, kimlik
+    return a.bulunan
+
+
+def test_cevirme_gostergesi_gizli_baslar_ve_kapali_panelde_de_gorunur(istemci):
+    """Çevirme sürerken çubuk ve süre görünmeli: telefonda kapanan panelin (yan-govde)
+    içinde olursa kullanıcı panel kapalıyken hiçbir şey görmez. Düğmelerle aynı yerde."""
+    _giris(istemci)
+    sayfa = istemci.get('/').get_data(as_text=True)
+    atalar, oz = _atalar(sayfa, 'cevir-ilerleme')
+    assert 'hidden' in oz and oz.get('role') == 'status'
+    assert 'yan' in atalar and 'yan-govde' not in atalar
+    assert 'yan-govde' not in _atalar(sayfa, 'cevir-word')[0]
+    # Saniye sayacı ekran okuyucuya her saniye okunmasın.
+    assert _atalar(sayfa, 'cevir-sure')[1].get('aria-hidden') == 'true'

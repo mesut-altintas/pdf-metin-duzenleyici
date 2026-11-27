@@ -220,6 +220,29 @@ main { max-width: 1400px; margin: 0 auto; padding: 16px; }
 .dosya-adi { font-weight: 600; word-break: break-all; }
 .cevir-satir { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
 .cevir-satir .dugme { flex: 1; }
+/* Çevirme sürüyor: tıklanan düğmede dönen simge, altında kayan çubuk ve geçen süre. */
+.dugme.calisiyor:disabled { opacity: 1; }
+.dugme.calisiyor::before {
+  content: ''; display: inline-block; width: 0.85em; height: 0.85em; margin-right: 6px;
+  vertical-align: -0.1em; border: 2px solid currentColor; border-right-color: transparent;
+  border-radius: 50%; animation: don 0.8s linear infinite;
+}
+@keyframes don { to { transform: rotate(360deg); } }
+.cevir-ilerleme { margin-top: 8px; }
+.cevir-ilerleme .kucuk-not { margin: 6px 0 0; }
+#cevir-sure { font-variant-numeric: tabular-nums; }
+.ilerleme-cubuk {
+  position: relative; height: 4px; border-radius: 2px; background: var(--cizgi); overflow: hidden;
+}
+.ilerleme-cubuk span {
+  position: absolute; top: 0; bottom: 0; left: -35%; width: 35%; border-radius: 2px;
+  background: var(--vurgu); animation: kay 1.4s ease-in-out infinite;
+}
+@keyframes kay { to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .dugme.calisiyor::before { animation-duration: 2.4s; }
+  .ilerleme-cubuk span { animation: none; left: 0; width: 100%; opacity: 0.45; }
+}
 .cevir-not { margin: 4px 0 0; }
 .ara { display: block; margin-top: 14px; font-size: 13px; color: var(--soluk); }
 .ara input {
