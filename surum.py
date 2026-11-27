@@ -6,7 +6,7 @@ sayfanın alt bilgisi "Hakkında"ya, oradaki bağlantı `KAYNAK_DEPO`'daki `v<SU
 yayından önce açık depoda olmalı. Kodu kendi sunucusunda çalıştıran, bağlantıyı
 kendi deposuna çevirmelidir.
 """
-SURUM = '1.19'
+SURUM = '1.20'
 TELIF = '© 2026 Mesut Altıntaş'
 KAYNAK_DEPO = 'https://github.com/mesut-altintas/pdf-metin-duzenleyici'
 LISANS = 'AGPL-3.0'

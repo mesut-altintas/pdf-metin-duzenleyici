@@ -84,6 +84,7 @@ Sürüm `surum.py`'de; her yayından önce bir artırılır, buraya yazılır ve
 
 | Sürüm | Tarih | Değişiklik |
 |---|---|---|
+| 1.20 | 27.11.2026 | Word / Excel'e çevirme sürerken ekranda gösterge: düğmede dönen simge, kayan çubuk ve geçen süre; uzun sürerse "sayfayı kapatmayın" notu; çevirme sürerken sayfadan çıkışta tarayıcı sorar |
 | 1.19 | 26.11.2026 | Word'e çevirme: Chrome'dan yazdırılmış (web sayfası) PDF'lerde sözcük arası boşluklar korunur; yazı tipinin ailesi, kalınlığı ve eğimi PDF'teki tanımından okunur, Word'e yaygın bir yazı tipi adıyla yazılır |
 | 1.18 | 26.11.2026 | Word ve Excel'e çevirme: ekrandaki değişiklikler dahil; Excel'de tablolar tek sayfada, sayfalara bölünmüş tablo birleşir, tutar ve tarih gerçek değer olur; aynı belge hakkından sayılır. Kullanım koşulları ve aydınlatma metni buna göre güncellendi |
 | 1.17 | 26.11.2026 | Resim ekleme: PNG / JPEG; sürükleyerek taşıma, köşeden oranlı ve kenardan serbest boyutlandırma, 90° döndürme, beyaz zemini kaldırma, saydamlık, resmi değiştirme; değişiklik listesine girer |
