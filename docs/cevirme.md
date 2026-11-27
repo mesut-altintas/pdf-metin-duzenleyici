@@ -97,6 +97,23 @@ Automation" anahtarı açar — açılırsa ölçümden sonra iptal edilir
 - `=` ile başlayan metin formül olmaz (hücre türü açıkça metin).
 - Tablo yoksa hata (kod `tablo_yok`): "Metni almak için Word'e çevirin."
 
+## Ekranda bekleme göstergesi
+
+Kullanıcı (27.11.2026): büyük dosyada yalnız düğme pasifleşiyor, işin sürdüğü görülmüyor.
+Önceden yalnız PDF düğmelerinin altında soluk, sabit bir satır vardı.
+
+- Tıklanan düğmede dönen simge ve "Çevriliyor…"; altında kayan çubuk ve geçen süre
+  ("Word dosyası hazırlanıyor · 0:37").
+- 20 sn'den sonra: "N sayfalık belgede çevirme bir iki dakika sürebilir. Sayfayı kapatmayın."
+- Çevirme sürerken sekme kapatılır ya da sayfadan çıkılırsa tarayıcı sorar: sunucu işi
+  bitirirse hak sayılır ama dosya inmez.
+- **Yüzde yok:** sunucu ilerleme bildirmiyor; yüzde uydurma olurdu. Gerçek sayfa ilerlemesi
+  ("Sayfa 8 / 22") sunucunun yanıtı akışla göndermesini ister (yanıt biçimi, hata ve kota
+  başlıkları değişir) — gerekirse ayrı iş.
+- Gösterge telefonda kapanan panelin (`yan-govde`) dışında, düğmelerle aynı yerde
+  (`test_cevirme_gostergesi_gizli_baslar_ve_kapali_panelde_de_gorunur`). Saniye sayacı
+  ekran okuyucuya okunmaz (`aria-hidden`).
+
 ## Kullanım kaydı
 
 Olay türleri `word`, `excel`; yeni hata kodları `tablo_yok`, `sure`. Yönetim > Kullanım'da

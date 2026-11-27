@@ -819,7 +819,7 @@
       const sn = Math.floor((Date.now() - baslangic) / 1000);
       sure.textContent = `· ${sureYaz(sn)}`;
       if (uzun.hidden && sn >= UZUN_SURE_SN) {
-        const belge = sayfaSayisi > 1 ? `${sayfaSayisi} sayfalık belge` : 'Uzun belge';
+        const belge = sayfaSayisi > 1 ? `${sayfaSayisi} sayfalık belgede çevirme` : 'Çevirme';
         uzun.textContent = `${belge} bir iki dakika sürebilir. Sayfayı kapatmayın.`;
         uzun.hidden = false;
       }
